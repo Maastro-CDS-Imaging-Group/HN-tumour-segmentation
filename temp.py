@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from datautils.preprocessing import Preprocessor
-from datasets.HECKTORUnimodalityDataset import HECKTORUnimodalityDataset
+from datasets.hecktor_unimodality_dataset import HECKTORUnimodalityDataset
 from datautils.patch_sampling import PatchSampler2D, PatchSampler3D, PatchQueue
 import nnmodules
 

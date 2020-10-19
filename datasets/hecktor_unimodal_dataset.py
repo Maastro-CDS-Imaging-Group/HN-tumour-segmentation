@@ -15,7 +15,7 @@ import datautils.transforms as transforms
 AUG_PROBABILITY = 0.5
 
 
-class HECKTORUnimodalityDataset(torch.utils.data.Dataset):
+class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 	"""
 	Dataset class to interface with the HECKTOR data. Depending on the input_modality parameter, either PET or CT will be loaded.
 	The GTV masks for only the HECKTOR train set (4 centres from Quebec) are available.
