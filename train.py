@@ -25,14 +25,14 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 # Data config
-DATA_DIR = "/home/chinmay/Datasets/HECKTOR/hecktor_train/crFH_rs113_hecktor_nii"
+DATA_DIR = "/home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train/crFH_rs113_hecktor_nii"
 PATIENT_ID_FILEPATH = "./hecktor_meta/patient_IDs_train.txt"
 
 DATASET_KWARGS = {
                 'data_dir': DATA_DIR,
                 'patient_id_filepath': PATIENT_ID_FILEPATH,
                 'input_modality': 'PET',
-                'augment_data': True
+                'augment_data': False
                 }
 
 PREPROCESSOR_KWARGS = {
@@ -41,14 +41,14 @@ PREPROCESSOR_KWARGS = {
                      'clipping_range': {'PET': [0 ,20], 'CT': None}
                      }
 
-DIMENSIONS = 2
+DIMENSIONS = 3
 PATCH_SIZE_2D = (256, 256)
 PATCH_SIZE_3D = (128, 128, 32)
 
 TRAIN_PATCH_QUEUE_KWARGS = {
-		                  'max_length': 32,
-		                  'samples_per_volume': 16,
-		                  'num_workers': 0,
+		                  'max_length': 128,
+		                  'samples_per_volume': 32,
+		                  'num_workers': 4,
 		                  'shuffle_subjects': True,
 		                  'shuffle_patches': True
 	                     }
@@ -56,7 +56,7 @@ TRAIN_PATCH_QUEUE_KWARGS = {
 VAL_PATCH_QUEUE_KWARGS = {
 		                  'max_length': get_num_valid_patches(PATCH_SIZE_2D),
 		                  'samples_per_volume': get_num_valid_patches(PATCH_SIZE_2D),
-		                  'num_workers': 0,
+		                  'num_workers': 4,
 		                  'shuffle_subjects': False,
 		                  'shuffle_patches': False
 	                     }
@@ -72,7 +72,6 @@ NORMALIZATION = None   # None or 'batch'
 BATCH_OF_PATCHES_SIZE = 4
 EPOCHS = 5
 LEARNING_RATE = 0.001
-MOMENTUM = 0.9
 
 
 # -----------------------------------------------
@@ -89,7 +88,7 @@ val_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='validation', prepro
 if DIMENSIONS == 2:
 	train_sampler = PatchSampler2D(patch_size=PATCH_SIZE_2D, sampling='random')
 	val_sampler = PatchSampler2D(patch_size=PATCH_SIZE_2D, sampling='sequential')
-elif dimensions == 3:
+elif DIMENSIONS == 3:
 	train_sampler = PatchSampler3D(patch_size=PATCH_SIZE_3D, sampling='random')
 	val_sampler = PatchSampler3D(patch_size=PATCH_SIZE_3D, sampling='sequential')
 
@@ -119,14 +118,14 @@ ce_weights = torch.Tensor( [
 	                        1 - CLASS_FREQUENCIES[0] / (CLASS_FREQUENCIES[0] + CLASS_FREQUENCIES[1]),
 	                        1 - CLASS_FREQUENCIES[1] / (CLASS_FREQUENCIES[0] + CLASS_FREQUENCIES[1])
 	                       ]
-	                     )
+	                     ).cuda()
 
 criterion = torch.nn.CrossEntropyLoss(weight=ce_weights, reduction='mean')
 
-optimizer = torch.optim.Adam(unet.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
+optimizer = torch.optim.Adam(unet.parameters(), lr=LEARNING_RATE)
 
 # Training loop
-for epoch in EPOCHS:
+for epoch in range(EPOCHS):
 
 	running_train_loss = 0
 	running_val_loss = 0
@@ -137,7 +136,7 @@ for epoch in EPOCHS:
 	for i, batch_of_patches in tqdm(enumerate(train_patch_loader)):
 
 		PET_patches = batch_of_patches['PET'].cuda()
-		GTV_labelmap_patches = batch_of_patches['GTV-labelmap'].cuda()
+		GTV_labelmap_patches = batch_of_patches['GTV-labelmap'].long().cuda()
 
 		# Forward pass
 		optimizer.zero_grad()
@@ -151,6 +150,11 @@ for epoch in EPOCHS:
 		optimizer.step()
 
 		running_train_loss += train_loss.item()
+		break
+	running_train_loss /= len(batch_of_patches)
+
+	# Clear CUDA cache
+	torch.cuda.empty_cache()
 
 
 	# Validate
@@ -159,7 +163,7 @@ for epoch in EPOCHS:
 	for i, batch_of_patches in tqdm(enumerate(val_patch_loader)):
 
 		PET_patches = batch_of_patches['PET'].cuda()
-		GTV_labelmap_patches = batch_of_patches['GTV-labelmap'].cuda()
+		GTV_labelmap_patches = batch_of_patches['GTV-labelmap'].long().cuda()
 
 		# Forward pass
 		optimizer.zero_grad()
@@ -169,6 +173,11 @@ for epoch in EPOCHS:
 		with torch.no_grad(): # Disable autograd
 			val_loss = criterion(pred_patches, GTV_labelmap_patches)
 			running_val_loss += val_loss.item()
+		break
+	running_val_loss /= len(batch_of_patches)
+
+	# Clear CUDA cache
+	torch.cuda.empty_cache()
 
 	logging.debug(f"Avg. training loss: {running_train_loss}")
 	logging.debug(f"Avg. validation loss: {running_val_loss}")

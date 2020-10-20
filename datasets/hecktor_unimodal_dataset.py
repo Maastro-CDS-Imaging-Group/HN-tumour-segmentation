@@ -109,7 +109,7 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 				input_image_np, GTV_labelmap_np = self.apply_transform(input_image_np, GTV_labelmap_np)
 
 		# Rescale intensities to [0,1] range
-		# input_image_np = self.preprocessor.rescale_to_unit_range(input_image_np)
+		input_image_np = self.preprocessor.rescale_to_unit_range(input_image_np)
 
 		# Construct the sample dict -- Convert to tensor and change dim ordering to (D,H,W).
 		# Input image will have shape (1,D,H,W). Target labelmap will have (D,H,W)

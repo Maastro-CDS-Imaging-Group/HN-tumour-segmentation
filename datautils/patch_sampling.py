@@ -31,7 +31,7 @@ class PatchSampler3D():
             f_pt = np.array(f_pt)
             start_idx = (f_pt - np.floor(patch_size/2)).astype(np.int)
             end_idx = (f_pt + np.ceil(patch_size/2)).astype(np.int)
-            #print(f_pt, start_idx, end_idx)
+            # print(f_pt, start_idx, end_idx)
 
             for key in subject_dict.keys():
                 if key == 'PET' or key == 'CT' or key == 'PET-CT': # The shape is (C,D,H,W) for PET and CT.
@@ -183,7 +183,7 @@ class PatchQueue(Dataset):
             self.patches_list.extend(patches)
 
             self.counter += 1
-            print("[PatchQueue]", self.counter)
+            # print("[PatchQueue]", self.counter)
 
         # Shuffle the queue
         if self.shuffle_patches:
@@ -194,7 +194,7 @@ class PatchQueue(Dataset):
         try:
             subject_sample = next(self.subjects_iterable)
         except StopIteration as exception:
-            print("[PatchQueue]Subjects loader exhausted. Initializing again")
+            # print("[PatchQueue]Subjects loader exhausted. Initializing again")
             self.subjects_iterable = self._get_subjects_iterable()
             subject_sample = next(self.subjects_iterable)
         return subject_sample
@@ -205,7 +205,7 @@ class PatchQueue(Dataset):
                                      collate_fn=lambda x: x[0],
                                      shuffle=self.shuffle_subjects,
                                     )
-        print("subjects loader length:", len(subjects_loader))
+        # print("subjects loader length:", len(subjects_loader))
         return iter(subjects_loader)
 
 
