@@ -114,7 +114,7 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 		# Construct the sample dict -- Convert to tensor and change dim ordering to (D,H,W).
 		# Input image will have shape (1,D,H,W). Target labelmap will have (D,H,W)
 		sample_dict = {self.input_modality: np2tensor(input_image_np).permute(2,1,0).unsqueeze(dim=0),
-                       'GTV-labelmap': np2tensor(GTV_labelmap_np).permute(2,1,0)
+                       'GTV-labelmap': np2tensor(GTV_labelmap_np).permute(2,1,0).long()
 		              }
 
 		return sample_dict
@@ -145,13 +145,13 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 
 if __name__ == '__main__':
 
-	from data_utils.preprocessing import Preprocessor
+	from datautils.preprocessing import Preprocessor
 
 	data_dir = "/home/chinmay/Datasets/HECKTOR/hecktor_train/crFH_rs113_hecktor_nii"
 	patient_id_filepath = "../hecktor_meta/patient_IDs_train.txt"
 	preprocessor = Preprocessor()
 
-	dataset = HECKTORUnimodalityDataset(data_dir,
+	dataset = HECKTORUnimodalDataset(data_dir,
 			                          patient_id_filepath,
 			                          mode='training',
 			                          preprocessor=preprocessor,

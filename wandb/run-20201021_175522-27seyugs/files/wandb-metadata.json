@@ -1,0 +1,24 @@
+{
+    "os": "Linux-3.10.0-1127.19.1.el7.x86_64-x86_64-with-centos-7.8.2003-Core",
+    "python": "3.6.8",
+    "heartbeatAt": "2020-10-21T15:55:25.821168",
+    "startedAt": "2020-10-21T15:55:22.860919",
+    "docker": null,
+    "gpu": "Tesla P100-SXM2-16GB",
+    "gpu_count": 2,
+    "cpu_count": 24,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "codePath": "train.py",
+    "program": "./train.py",
+    "git": {
+        "remote": "https://github.com/cnmy-ro/HN-tumour-segmentation.git",
+        "commit": "372fbdc4f7d10592de3bc4f66cf9b356b765b3ea"
+    },
+    "email": null,
+    "root": "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation",
+    "host": "lng07.hpc.itc.rwth-aachen.de",
+    "username": "zk315372",
+    "executable": "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/../../maastro_env/bin/python3"
+}

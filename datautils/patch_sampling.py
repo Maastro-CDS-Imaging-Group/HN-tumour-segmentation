@@ -12,11 +12,14 @@ class PatchSampler3D():
     """
     Samples 3D patches of specified size using the specified sampling method.
     """
-    def __init__(self, patch_size, sampling='random', focal_point_stride=1):
+    def __init__(self, patch_size, sampling='random', focal_point_stride=(1,1,1)):
         self.patch_size = list(patch_size) # Specified in (W,H,D) order
         self.patch_size.reverse()    # Convert to (D,H,W) order
+
         self.sampling = sampling # TODO - Add new schemes
-        self.focal_point_stride = focal_point_stride # Useful while using sequential sampling
+
+        self.focal_point_stride = list(focal_point_stride) # Useful while using sequential sampling. Specified in (W,H,D) order
+        self.focal_point_stride.reverse() # Convert to (D,H,W) order
 
 
     def get_samples(self, subject_dict, num_patches):
@@ -31,7 +34,7 @@ class PatchSampler3D():
             f_pt = np.array(f_pt)
             start_idx = (f_pt - np.floor(patch_size/2)).astype(np.int)
             end_idx = (f_pt + np.ceil(patch_size/2)).astype(np.int)
-            #print(f_pt, start_idx, end_idx)
+            # print(f_pt, start_idx, end_idx)
 
             for key in subject_dict.keys():
                 if key == 'PET' or key == 'CT' or key == 'PET-CT': # The shape is (C,D,H,W) for PET and CT.
@@ -62,9 +65,9 @@ class PatchSampler3D():
             xs = np.random.randint(valid_indx_range[0][2], valid_indx_range[1][2], num_patches)
         elif self.sampling == 'sequential':
             # arange takes exlusive range
-            z_range = np.arange(valid_indx_range[0][0], valid_indx_range[1][0] + 1, self.focal_point_stride).astype(np.int)
-            y_range = np.arange(valid_indx_range[0][1], valid_indx_range[1][1] + 1, self.focal_point_stride).astype(np.int)
-            x_range = np.arange(valid_indx_range[0][2], valid_indx_range[1][2] + 1, self.focal_point_stride).astype(np.int)
+            z_range = np.arange(valid_indx_range[0][0], valid_indx_range[1][0] + 1, self.focal_point_stride[0]).astype(np.int)
+            y_range = np.arange(valid_indx_range[0][1], valid_indx_range[1][1] + 1, self.focal_point_stride[1]).astype(np.int)
+            x_range = np.arange(valid_indx_range[0][2], valid_indx_range[1][2] + 1, self.focal_point_stride[2]).astype(np.int)
             zs, ys, xs = np.meshgrid(z_range, y_range, x_range, indexing='ij')
             zs, ys, xs = zs.flatten(), ys.flatten(), xs.flatten()
 
@@ -76,12 +79,14 @@ class PatchSampler2D():
     """
     Samples 2D axial slice patches of specified x-y size using the specified sampling method.
     """
-    def __init__(self, patch_size, sampling='random', focal_point_stride=1):
+    def __init__(self, patch_size, sampling='random', focal_point_stride=(1,1)):
         self.patch_size = list(patch_size) # Specified in (W,H) order
         self.patch_size.reverse()    # Convert to (H,W) order
-        self.sampling = sampling # TODO
-        self.focal_point_stride = focal_point_stride # Useful while using sequential sampling
 
+        self.sampling = sampling # TODO
+
+        self.focal_point_stride = list(focal_point_stride)  # Useful while using sequential sampling. Specified in (W,H) order
+        self.focal_point_stride.reverse()  # Convert to (H,W) order
 
 
     def get_samples(self, subject_dict, num_patches):
@@ -127,9 +132,9 @@ class PatchSampler2D():
             xs = np.random.randint(valid_indx_range[0][1], valid_indx_range[1][1], num_patches)
         elif self.sampling == 'sequential':
             # arange takes exclusive range
-            z_range = np.arange(0, volume_shape[0], self.focal_point_stride).astype(np.int)
-            y_range = np.arange(valid_indx_range[0][0], valid_indx_range[1][0] + 1, self.focal_point_stride).astype(np.int)
-            x_range = np.arange(valid_indx_range[0][1], valid_indx_range[1][1] + 1, self.focal_point_stride).astype(np.int)
+            z_range = np.arange(0, volume_shape[0]).astype(np.int)
+            y_range = np.arange(valid_indx_range[0][0], valid_indx_range[1][0] + 1, self.focal_point_stride[0]).astype(np.int)
+            x_range = np.arange(valid_indx_range[0][1], valid_indx_range[1][1] + 1, self.focal_point_stride[1]).astype(np.int)
             zs, ys, xs = np.meshgrid(z_range, y_range, x_range, indexing='ij')
             zs, ys, xs = zs.flatten(), ys.flatten(), xs.flatten()
 
@@ -185,7 +190,7 @@ class PatchQueue(Dataset):
             self.patches_list.extend(patches)
 
             self.counter += 1
-            print("[PatchQueue]", self.counter)
+            # print("[PatchQueue]", self.counter)
 
         # Shuffle the queue
         if self.shuffle_patches:
@@ -196,7 +201,7 @@ class PatchQueue(Dataset):
         try:
             subject_sample = next(self.subjects_iterable)
         except StopIteration as exception:
-            print("[PatchQueue]Subjects loader exhausted. Initializing again")
+            # print("[PatchQueue]Subjects loader exhausted. Initializing again")
             self.subjects_iterable = self._get_subjects_iterable()
             subject_sample = next(self.subjects_iterable)
         return subject_sample
@@ -207,17 +212,29 @@ class PatchQueue(Dataset):
                                      collate_fn=lambda x: x[0],
                                      shuffle=self.shuffle_subjects,
                                     )
-        print("subjects loader length:", len(subjects_loader))
+        # print("subjects loader length:", len(subjects_loader))
         return iter(subjects_loader)
 
 
 
 
-def get_num_valid_patches(patch_size, volume_size=(450,450,100), focal_point_stride=1):
+def get_num_valid_patches(patch_size, volume_size=(450,450,100), focal_point_stride=(1,1,1)):
+
+    # Convert to (D,H,W) ordering.   [ (H,W) for patch_size and focal_point_stride if theu are 2D ]
+    patch_size = list(patch_size)
+    patch_size.reverse()
+
+    volume_size = list(volume_size)
+    volume_size.reverse()
+
+    focal_point_stride=list(focal_point_stride)
+    focal_point_stride.reverse()
+
+    assert len(patch_size) == len(focal_point_stride)
     dimensions = len(patch_size)
-    num_slices = volume_size[2]
+    num_slices = volume_size[0]
     if dimensions == 2 and len(volume_size) == 3:
-        volume_size = volume_size[:2]
+        volume_size = volume_size[1:]
     patch_size = np.array(patch_size)
 
     # Get inclusive range of valid focal points
@@ -226,15 +243,15 @@ def get_num_valid_patches(patch_size, volume_size=(450,450,100), focal_point_str
                         np.array(volume_size) - np.ceil(patch_size/2)
                        ]
 
-    valid_area_size = valid_indx_range[1] - valid_indx_range[0] + 1
+    valid_region_size = valid_indx_range[1] - valid_indx_range[0] + 1
     if dimensions == 2:
-        num_valid_focal_pts = np.ceil(float(valid_area_size[0]/focal_point_stride)) * \
-                              np.ceil(float(valid_area_size[1]/focal_point_stride)) * \
-                              np.ceil(float(num_slices/focal_point_stride))
+        num_valid_focal_pts = np.ceil(float(valid_region_size[0]/focal_point_stride[0])) * \
+                              np.ceil(float(valid_region_size[1]/focal_point_stride[1])) * \
+                              np.ceil(float(num_slices))
     elif dimensions == 3:
-        num_valid_focal_pts = np.ceil(float(valid_area_size[0]/focal_point_stride)) * \
-                              np.ceil(float(valid_area_size[1]/focal_point_stride)) * \
-                              np.ceil(float(valid_area_size[2]/focal_point_stride))
+        num_valid_focal_pts = np.ceil(float(valid_region_size[0]/focal_point_stride[0])) * \
+                              np.ceil(float(valid_region_size[1]/focal_point_stride[1])) * \
+                              np.ceil(float(valid_region_size[2]/focal_point_stride[2]))
 
     return int(num_valid_focal_pts)
 

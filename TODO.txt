@@ -1,0 +1,23 @@
+- Integrate patch aggregation and use for dice metric calculation for validation
+ 
+- Implement validation metrics, use only on aggregated prediction volumes:
+    x Dice and Jaccard for now. 
+    - Then Surface Dice
+
+x Use WandB for logging. Then run the training script tests.
+- Improve WandB logging:
+    - Per epoch or per batch logging ?
+    - Log system-related stuff 
+
+- Build temp inference script that includes saving the predictions as NRRD
+
+- Option for distributed training: 
+    - See torch DataParallel for now
+    - Later move on to using torch DistributedDataParallel 
+
+
+
+
+- Once tests are completed, reorganize code
+    - YAML config files
+    - Trainer and Inferer classes

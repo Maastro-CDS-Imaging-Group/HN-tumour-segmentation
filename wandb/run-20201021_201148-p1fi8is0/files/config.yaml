@@ -1,0 +1,28 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.10.7
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.6.8
+batch_of_patches_size:
+  desc: null
+  value: 2
+dataset:
+  desc: null
+  value: hecktor_train_crS_rs113
+epochs:
+  desc: null
+  value: 12
+learning_rate:
+  desc: null
+  value: 0.0003
+patch_size:
+  desc: null
+  value:
+  - 128
+  - 128
+  - 32
