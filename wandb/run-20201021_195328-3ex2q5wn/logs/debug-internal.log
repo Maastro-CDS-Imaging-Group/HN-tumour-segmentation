@@ -1,0 +1,33 @@
+2020-10-21 19:53:29,905 INFO    MainThread:4200 [internal.py:wandb_internal():62] W&B internal server running at pid: 4200
+2020-10-21 19:53:29,908 INFO    WriterThread:4200 [datastore.py:open_for_write():76] open: wandb/run-20201021_195328-3ex2q5wn/run-3ex2q5wn.wandb
+2020-10-21 19:53:29,908 DEBUG   HandlerThread:4200 [handler.py:handle_request():54] handle_request: check_version
+2020-10-21 19:53:29,910 DEBUG   SenderThread:4200 [sender.py:send():88] send: header
+2020-10-21 19:53:29,914 DEBUG   SenderThread:4200 [sender.py:send():88] send: request
+2020-10-21 19:53:29,917 DEBUG   SenderThread:4200 [sender.py:send_request():97] send_request: check_version
+2020-10-21 19:53:29,923 DEBUG   Thread-4  :4200 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): pypi.org:443
+2020-10-21 19:53:29,956 DEBUG   Thread-4  :4200 [connectionpool.py:_make_request():442] https://pypi.org:443 "GET /pypi/wandb/json HTTP/1.1" 200 50840
+2020-10-21 19:53:29,969 DEBUG   SenderThread:4200 [sender.py:send():88] send: run
+2020-10-21 19:53:29,988 DEBUG   SenderThread:4200 [cmd.py:execute():719] Popen(['git', 'cat-file', '--batch-check'], cwd=/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation, universal_newlines=False, shell=None, istream=<valid stream>)
+2020-10-21 19:53:30,014 DEBUG   SenderThread:4200 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2020-10-21 19:53:30,154 WARNING MainThread:4200 [internal.py:wandb_internal():116] Internal process interrupt: 1
+2020-10-21 19:53:30,198 DEBUG   SenderThread:4200 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 200 None
+2020-10-21 19:53:30,207 INFO    SenderThread:4200 [dir_watcher.py:__init__():167] watching files in: wandb/run-20201021_195328-3ex2q5wn/files
+2020-10-21 19:53:30,207 INFO    SenderThread:4200 [sender.py:_start_run_threads():469] run started: 3ex2q5wn with start time 1603302808
+2020-10-21 19:53:31,017 WARNING MainThread:4200 [internal.py:wandb_internal():116] Internal process interrupt: 2
+2020-10-21 19:53:31,017 ERROR   MainThread:4200 [internal.py:wandb_internal():119] Internal process interrupted.
+2020-10-21 19:53:31,207 INFO    SenderThread:4200 [sender.py:finish():588] shutting down sender
+2020-10-21 19:53:31,207 INFO    SenderThread:4200 [dir_watcher.py:finish():280] shutting down directory watcher
+2020-10-21 19:53:31,970 INFO    WriterThread:4200 [datastore.py:close():257] close: wandb/run-20201021_195328-3ex2q5wn/run-3ex2q5wn.wandb
+2020-10-21 19:53:31,972 INFO    HandlerThread:4200 [handler.py:finish():267] shutting down handler
+2020-10-21 19:53:32,208 INFO    SenderThread:4200 [dir_watcher.py:finish():309] scan: wandb/run-20201021_195328-3ex2q5wn/files
+2020-10-21 19:53:32,209 INFO    SenderThread:4200 [dir_watcher.py:finish():315] scan save: wandb/run-20201021_195328-3ex2q5wn/files/config.yaml config.yaml
+2020-10-21 19:53:32,219 INFO    SenderThread:4200 [file_pusher.py:finish():169] shutting down file pusher
+2020-10-21 19:53:32,219 INFO    SenderThread:4200 [file_pusher.py:join():174] waiting for file pusher
+2020-10-21 19:53:32,226 DEBUG   Thread-10 :4200 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2020-10-21 19:53:32,388 DEBUG   Thread-10 :4200 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 200 None
+2020-10-21 19:53:32,397 DEBUG   Thread-10 :4200 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): storage.googleapis.com:443
+2020-10-21 19:53:32,719 DEBUG   Thread-10 :4200 [connectionpool.py:_make_request():442] https://storage.googleapis.com:443 "PUT /wandb-production.appspot.com/maastro-clinic/hn-gtv-segmentation/3ex2q5wn/config.yaml?Expires=1603389212&GoogleAccessId=gorilla-cloud-storage%40wandb-production.iam.gserviceaccount.com&Signature=mM0ZVeRJhd%2Fc%2B0HwvcsmYAk0rn8x0pZav%2FxClBB0lhXKsOKeH62ah%2F0heGGWzW%2Fnkp6YhsQsqLrxdY8cxr0I58WTCT5%2BbBCAvQSTJrXaz%2BRKd%2B4Jo2Hbl5ag%2ByfQQ33HTI%2FchVjdmSrL6Yi49AhSwRk3yNTOF3YrGEIQlRrlV2mkq78dpH2mYYJaV2EeQhwbD7JOFDucuBCUQs958blLPS7f6qeT%2FIjMaIWN9POWV5UM1QWEu%2Fh6jzgNebyfZ9JDGoCa%2F%2BiuCI%2F9i3oUzxyVJyilqhEulu0X79AaZ%2Bn%2BirhCeSGdmDQpDpzO6h0xm%2FttsuIn5pNCaifLcIl28YZekA%3D%3D HTTP/1.1" 200 0
+2020-10-21 19:53:32,721 INFO    Thread-10 :4200 [upload_job.py:push():112] Uploaded file wandb/run-20201021_195328-3ex2q5wn/files/config.yaml
+2020-10-21 19:53:33,225 DEBUG   Thread-5  :4200 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2020-10-21 19:53:33,387 DEBUG   Thread-5  :4200 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /files/maastro-clinic/hn-gtv-segmentation/3ex2q5wn/file_stream HTTP/1.1" 200 None
+2020-10-21 19:53:33,389 INFO    MainThread:4200 [internal.py:handle_exit():137] Internal process exited

@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/home/zk315372/Chinmay/Git/HN-tumour-segmentation/train.py", line 146, in <module>
+    unet = nnmodules.UNet3D(residual=RESIDUAL, normalization=NORMALIZATION).cuda()
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/nn/modules/module.py", line 458, in cuda
+    return self._apply(lambda t: t.cuda(device))
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/nn/modules/module.py", line 354, in _apply
+    module._apply(fn)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/nn/modules/module.py", line 354, in _apply
+    module._apply(fn)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/nn/modules/module.py", line 354, in _apply
+    module._apply(fn)
+  [Previous line repeated 2 more times]
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/nn/modules/module.py", line 376, in _apply
+    param_applied = fn(param)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/nn/modules/module.py", line 458, in <lambda>
+    return self._apply(lambda t: t.cuda(device))
+RuntimeError: CUDA error: all CUDA-capable devices are busy or unavailable

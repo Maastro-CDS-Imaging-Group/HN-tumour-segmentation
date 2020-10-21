@@ -1,0 +1,25 @@
+2020-10-21 19:53:28,675 INFO    MainThread:4158 [wandb_init.py:_log_setup():292] Logging user logs to wandb/run-20201021_195328-3ex2q5wn/logs/debug.log
+2020-10-21 19:53:28,675 INFO    MainThread:4158 [wandb_init.py:_log_setup():293] Logging internal logs to wandb/run-20201021_195328-3ex2q5wn/logs/debug-internal.log
+2020-10-21 19:53:28,675 INFO    MainThread:4158 [wandb_setup.py:_flush():69] setting env: {}
+2020-10-21 19:53:28,675 INFO    MainThread:4158 [wandb_setup.py:_flush():69] setting user settings: {'email': 'chinmay.srao97@gmail.com'}
+2020-10-21 19:53:28,675 INFO    MainThread:4158 [wandb_setup.py:_flush():69] multiprocessing start_methods=fork,spawn,forkserver
+2020-10-21 19:53:30,154 WARNING MainThread:4158 [wandb_init.py:init():483] interrupted
+Traceback (most recent call last):
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/sdk/wandb_init.py", line 463, in init
+    run = wi.init()
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/sdk/wandb_init.py", line 369, in init
+    ret = backend.interface.communicate_run(run, timeout=30)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/interface/interface.py", line 533, in communicate_run
+    return self._communicate_run(run, timeout=timeout)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/interface/interface.py", line 524, in _communicate_run
+    resp = self._communicate(req, timeout=timeout)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/interface/interface.py", line 437, in _communicate
+    return future.get(timeout)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/interface/interface.py", line 58, in get
+    is_set = self._object_ready.wait(timeout)
+  File "/usr/lib64/python3.6/threading.py", line 551, in wait
+    signaled = self._cond.wait(timeout)
+  File "/usr/lib64/python3.6/threading.py", line 299, in wait
+    gotit = waiter.acquire(True, timeout)
+KeyboardInterrupt
+2020-10-21 19:53:30,162 INFO    MainThread:4158 [internal.py:handle_exit():137] Internal process exited
