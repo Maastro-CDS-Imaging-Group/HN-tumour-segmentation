@@ -49,3 +49,4 @@ def tensor2sitk(image_tensor, has_whd_ordering=True, spacing=(1,1,3)):
 	image_sitk = sitk.GetImageFromArray(image_np)
 	image_sitk.SetSpacing(spacing)
 	return image_sitk
+

@@ -1,4 +1,4 @@
-- Integrate patch aggregation and use for dice metric calculation for validation
+x Integrate patch aggregation and use for dice metric calculation for validation
  
 - Implement validation metrics, use only on aggregated prediction volumes:
     x Dice and Jaccard for now. 

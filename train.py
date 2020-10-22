@@ -15,9 +15,11 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import wandb
 
+from datautils.conversion import *
 from datautils.preprocessing import Preprocessor
 from datasets.hecktor_unimodal_dataset import HECKTORUnimodalDataset
-from datautils.patch_sampling import PatchSampler2D, PatchSampler3D, PatchQueue, get_num_valid_patches
+from datautils.patch_sampling import PatchSampler3D, PatchQueue, get_num_valid_patches
+from datautils.patch_aggregation import PatchAggregator3D
 import nnmodules
 from trainutils.metrics import volumetric_dice
 
@@ -29,7 +31,7 @@ DATA_DIR = "/home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train/crS_rs113_heck
 PATIENT_ID_FILEPATH = "./hecktor_meta/patient_IDs_train.txt"
 
 CLASS_FREQUENCIES = {0: 199156267, 1: 904661}
-VOLUME_SIZE = (144, 144, 48)
+VOLUME_SIZE = (144, 144, 48)  # (W,H,D)
 
 
 # -----------------------------------------------
@@ -50,15 +52,12 @@ PREPROCESSOR_KWARGS = {
                      'clipping_range': {'PET': [0 ,20], 'CT': None}
                      }
 
-DIMENSIONS = 3
-PATCH_SIZE_2D = (256, 256)
-PATCH_SIZE_3D = (128, 128, 32)
+PATCH_SIZE = (128, 128, 32)
 
-# FOCAL_POINT_STRIDE_2D = np.array(PATCH_SIZE_2D) //  2
-# FOCAL_POINT_STRIDE_3D = np.array(PATCH_SIZE_3D) //  2
-FOCAL_POINT_STRIDE_3D = (5,5,5)
+# FOCAL_POINT_STRIDE = np.array(PATCH_SIZE) //  2
+FOCAL_POINT_STRIDE = (10, 10, 10)
 
-TRAIN_PATCH_SAMPLER_KWARGS = {'patch_size': PATCH_SIZE_3D, 
+TRAIN_PATCH_SAMPLER_KWARGS = {'patch_size': PATCH_SIZE, 
                               'sampling': 'random'
                              }
 TRAIN_PATCH_QUEUE_KWARGS = {
@@ -70,19 +69,18 @@ TRAIN_PATCH_QUEUE_KWARGS = {
 	                     }
 
 
-VAL_PATCH_SAMPLER_KWARGS = {'patch_size': PATCH_SIZE_3D, 
+VAL_PATCH_SAMPLER_KWARGS = {'patch_size': PATCH_SIZE, 
                               'sampling': 'sequential',
-							  'focal_point_stride': FOCAL_POINT_STRIDE_3D
+							  'focal_point_stride': FOCAL_POINT_STRIDE
                              }
 
-valid_patches_per_volume = get_num_valid_patches(PATCH_SIZE_3D, VOLUME_SIZE, focal_point_stride=FOCAL_POINT_STRIDE_3D)
-VAL_PATCH_QUEUE_KWARGS = {
-		                  'max_length': valid_patches_per_volume,
-		                  'samples_per_volume': valid_patches_per_volume,
-		                  'num_workers': 4,
-		                  'shuffle_subjects': False,
-		                  'shuffle_patches': False
-	                     }
+# VAL_PATCH_QUEUE_KWARGS = {
+# 		                  'max_length': valid_patches_per_volume,
+# 		                  'samples_per_volume': valid_patches_per_volume,
+# 		                  'num_workers': 4,
+# 		                  'shuffle_subjects': False,
+# 		                  'shuffle_patches': False
+# 	                     }
 
 
 # Network config
@@ -98,8 +96,8 @@ LEARNING_RATE = 0.0003
 CHECKPOINT_STEP = 3
 CHECK_POINT_DIR = "./model_checkpoints"
 
-CONTINUE_FROM_CHECKPOINT = False
-CHECKPOINT_LOAD_PATH = "./model_checkpoints/unet3d_pet_e10.pt"
+CONTINUE_FROM_CHECKPOINT = True
+CHECKPOINT_LOAD_PATH = "./model_checkpoints/unet3d_pet_9.pt"
 
 
 # Logging config
@@ -112,7 +110,7 @@ if USE_WANDB:
 			   project="hn-gtv-segmentation",
 			   name="training-script-test-run",
 			   config={'dataset': "hecktor_train_crS_rs113",
-				       'patch_size': PATCH_SIZE_3D,
+				       'patch_size': PATCH_SIZE,
 				       'batch_of_patches_size': BATCH_OF_PATCHES_SIZE,
 			   		   'epochs': EPOCHS,
 					   'learning_rate': LEARNING_RATE
@@ -120,40 +118,40 @@ if USE_WANDB:
 			 )
 
 
+
+# -----------------------------------------------
+# Checks
+# -----------------------------------------------
+
+assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
+assert TRAIN_PATCH_QUEUE_KWARGS['max_length'] % TRAIN_PATCH_QUEUE_KWARGS['samples_per_volume'] == 0
+
 # -----------------------------------------------
 # Data pipeline
 # -----------------------------------------------
 
 # Datasets
 preprocessor = Preprocessor(**PREPROCESSOR_KWARGS)
-
 train_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='training', preprocessor=preprocessor)
 val_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='validation', preprocessor=preprocessor)
 
-# Patch samplers
-if DIMENSIONS == 2:
-	train_sampler = PatchSampler2D(**TRAIN_PATCH_SAMPLER_KWARGS)
-	val_sampler = PatchSampler2D(**VAL_PATCH_SAMPLER_KWARGS)
-elif DIMENSIONS == 3:
-	train_sampler = PatchSampler3D(**TRAIN_PATCH_SAMPLER_KWARGS)
-	val_sampler = PatchSampler3D(**VAL_PATCH_SAMPLER_KWARGS)
-
-# Queues and loaders
+# Patch based training stuff
+train_sampler = PatchSampler3D(**TRAIN_PATCH_SAMPLER_KWARGS)
 train_patch_queue = PatchQueue(**TRAIN_PATCH_QUEUE_KWARGS, dataset=train_dataset, sampler=train_sampler)
 train_patch_loader = DataLoader(train_patch_queue, batch_size=BATCH_OF_PATCHES_SIZE)
 
-val_patch_queue = PatchQueue(**VAL_PATCH_QUEUE_KWARGS, dataset=val_dataset, sampler=val_sampler)
-val_patch_loader = DataLoader(val_patch_queue, batch_size=BATCH_OF_PATCHES_SIZE)
+# Patch based inference stuff
+valid_patches_per_volume = get_num_valid_patches(PATCH_SIZE, VOLUME_SIZE, focal_point_stride=FOCAL_POINT_STRIDE)
+val_sampler = PatchSampler3D(**VAL_PATCH_SAMPLER_KWARGS)
+patch_aggregator = PatchAggregator3D(PATCH_SIZE, VOLUME_SIZE, FOCAL_POINT_STRIDE)
+val_volume_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
 
 # -----------------------------------------------
 # Network
 # -----------------------------------------------
 
-if DIMENSIONS == 2:
-	unet = nnmodules.UNet2D(residual=RESIDUAL, normalization=NORMALIZATION).cuda()
-elif DIMENSIONS == 3:
-	unet = nnmodules.UNet3D(residual=RESIDUAL, normalization=NORMALIZATION).cuda()
+unet3d = nnmodules.UNet3D(residual=RESIDUAL, normalization=NORMALIZATION).cuda()
 
 
 # -----------------------------------------------
@@ -168,29 +166,32 @@ ce_weights = torch.Tensor( [
 
 criterion = torch.nn.CrossEntropyLoss(weight=ce_weights, reduction='mean')
 
-optimizer = torch.optim.Adam(unet.parameters(), lr=LEARNING_RATE)
+optimizer = torch.optim.Adam(unet3d.parameters(), lr=LEARNING_RATE)
 
-# Training loop
-if USE_WANDB:
-	wandb.watch(unet)
 
 start_epoch = 1
 if CONTINUE_FROM_CHECKPOINT:
-	unet.load_state_dict(torch.load(CHECKPOINT_LOAD_PATH))
-	start_epoch = CHECKPOINT_LOAD_PATH.split('.')[0][-2]
+	unet3d.load_state_dict(torch.load(CHECKPOINT_LOAD_PATH))
+	start_epoch = CHECKPOINT_LOAD_PATH.split('.')[-2][-1]
 	start_epoch = int(start_epoch) + 1
+	print("Continuing from epoch", start_epoch)
 
+if USE_WANDB:
+	wandb.watch(unet3d)
+	wandb.config.update({'start_epoch': start_epoch,
+	                     'epochs': start_epoch + EPOCHS})
+
+# Training loop
 for epoch in range(start_epoch, start_epoch+EPOCHS):
 	logging.debug(f"Epoch {epoch}")
 
 	epoch_train_loss = 0
 	epoch_val_loss = 0
 
-	epoch_train_dice = 0
 	epoch_val_dice = 0
 
 	# Train
-	unet.train() # Set the model in train mode
+	unet3d.train() # Set the model in train mode
 	logging.debug("Training ...")
 	for batch_of_patches in tqdm(train_patch_loader):
 
@@ -199,7 +200,7 @@ for epoch in range(start_epoch, start_epoch+EPOCHS):
 
 		# Forward pass
 		optimizer.zero_grad()
-		pred_patches = unet(PET_patches)
+		pred_patches = unet3d(PET_patches)
 
 		# Compute loss
 		train_loss = criterion(pred_patches, GTV_labelmap_patches)
@@ -210,12 +211,8 @@ for epoch in range(start_epoch, start_epoch+EPOCHS):
 
 		# Calculate and accumulate metrics
 		epoch_train_loss += train_loss.item()
-		dice_score = volumetric_dice(pred_patches.detach().cpu(), GTV_labelmap_patches.cpu())
-		epoch_train_dice += dice_score
 		break
-
 	epoch_train_loss /= len(train_patch_loader)
-	epoch_train_dice /= len(train_patch_loader)
 
 	# Clear CUDA cache
 	torch.cuda.empty_cache()
@@ -223,35 +220,50 @@ for epoch in range(start_epoch, start_epoch+EPOCHS):
 
 	# Validate
 	logging.debug("Validating ...")
-	unet.eval() # Set the model in inference mode
-	for batch_of_patches in tqdm(val_patch_loader):
+	unet3d.eval() # Set the model in inference mode
 
-		PET_patches = batch_of_patches['PET'].cuda()
-		GTV_labelmap_patches = batch_of_patches['GTV-labelmap'].long().cuda()
+	# Iterate over patients in validation set
+	for patient_dict in tqdm(val_volume_loader):
 
-		with torch.no_grad(): # Disable autograd
-			# Forward pass
-			pred_patches = unet(PET_patches)
+		# Remove the batch dimension from input and target volumes of the patient dict
+		for key, value in patient_dict.items():
+			patient_dict[key] = value[0]
 
-			# Compute validation loss
-			val_loss = criterion(pred_patches, GTV_labelmap_patches)
-			epoch_val_loss += val_loss.item()
+		# Get full list of patches
+		patches_list = val_sampler.get_samples(patient_dict, num_patches=valid_patches_per_volume)
 
-			# Calculate and accumulate metrics
-			dice_score = volumetric_dice(pred_patches.cpu(), GTV_labelmap_patches.cpu())
-			epoch_val_dice += dice_score
-			break
-	epoch_val_loss /= len(val_patch_loader)
-	epoch_val_dice /= len(val_patch_loader)
+		patient_pred_patches_list = []
 
+		# Take BATCH_OF_PATCHES_SIZE number of patches at a time and push through the network
+		for i in range(0, valid_patches_per_volume, BATCH_OF_PATCHES_SIZE):
+			PET_patches = torch.stack([patches_list[i]['PET'] for i in range(BATCH_OF_PATCHES_SIZE)], dim=0).cuda()
+			GTV_labelmap_patches = torch.stack([patches_list[i]['GTV-labelmap'] for i in range(BATCH_OF_PATCHES_SIZE)], dim=0).long().cuda()
 
+			with torch.no_grad(): # Disable autograd
+				# Forward pass
+				pred_patches = unet3d(PET_patches)
+				
+				# Convert the predicted batch of probabilities to a list of labelmap patches
+				patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches.cpu())) 
+
+				# Compute validation loss
+				val_loss = criterion(pred_patches, GTV_labelmap_patches)
+				epoch_val_loss += val_loss.item()
+
+		# Aggregate and compute dice
+		pred_labelmap_volume = patch_aggregator.aggregate(patient_pred_patches_list) 
+		dice_score = volumetric_dice(pred_labelmap_volume, patient_dict['GTV-labelmap'].cpu().numpy())
+
+	epoch_val_loss /= len(val_volume_loader) * valid_patches_per_volume / BATCH_OF_PATCHES_SIZE
+	epoch_val_dice /= len(val_volume_loader)
+	
+	
 	# Clear CUDA cache
 	torch.cuda.empty_cache()
 
 	# Logging
 	logging.debug(f"Training loss: {epoch_train_loss}")
 	logging.debug(f"Validation loss: {epoch_val_loss}")
-	logging.debug(f"Training dice: {epoch_train_dice}")
 	logging.debug(f"Validation dice: {epoch_val_dice}")
 	logging.debug("")
 	logging.debug("")
@@ -259,10 +271,10 @@ for epoch in range(start_epoch, start_epoch+EPOCHS):
 	if USE_WANDB:
 		wandb.log({'train-loss': epoch_train_loss,
 				   'val-loss': epoch_val_loss,
-				   'train-dice': epoch_train_dice,
 				   'val-dice': epoch_val_dice
-				  })
+				  },
+				  step=epoch)
 
 	# Checkpointing
-	if epoch % CHECKPOINT_STEP == 0:
-		torch.save(unet.state_dict(), f"{CHECK_POINT_DIR}/unet3d_pet_{epoch}.pt")
+	# if epoch % CHECKPOINT_STEP == 0:
+	# 	torch.save(unet3d.state_dict(), f"{CHECK_POINT_DIR}/unet3d_pet_{epoch}.pt")
