@@ -15,11 +15,10 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import wandb
 
-from datautils.conversion import *
 from datautils.preprocessing import Preprocessor
 from datasets.hecktor_unimodal_dataset import HECKTORUnimodalDataset
 from datautils.patch_sampling import PatchSampler3D, PatchQueue, get_num_valid_patches
-from datautils.patch_aggregation import PatchAggregator3D
+from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
 import nnmodules
 from trainutils.metrics import volumetric_dice
 
@@ -53,8 +52,6 @@ PREPROCESSOR_KWARGS = {
                      }
 
 PATCH_SIZE = (128, 128, 32)
-
-# FOCAL_POINT_STRIDE = np.array(PATCH_SIZE) //  2
 FOCAL_POINT_STRIDE = (10, 10, 10)
 
 TRAIN_PATCH_SAMPLER_KWARGS = {'patch_size': PATCH_SIZE, 
@@ -73,14 +70,6 @@ VAL_PATCH_SAMPLER_KWARGS = {'patch_size': PATCH_SIZE,
                               'sampling': 'sequential',
 							  'focal_point_stride': FOCAL_POINT_STRIDE
                              }
-
-# VAL_PATCH_QUEUE_KWARGS = {
-# 		                  'max_length': valid_patches_per_volume,
-# 		                  'samples_per_volume': valid_patches_per_volume,
-# 		                  'num_workers': 4,
-# 		                  'shuffle_subjects': False,
-# 		                  'shuffle_patches': False
-# 	                     }
 
 
 # Network config
@@ -103,7 +92,7 @@ CHECKPOINT_LOAD_PATH = "./model_checkpoints/unet3d_pet_9.pt"
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
 
-USE_WANDB = False
+USE_WANDB = True
 
 if USE_WANDB:
 	wandb.init(entity="cnmy-ro",
@@ -112,7 +101,6 @@ if USE_WANDB:
 			   config={'dataset': "hecktor_train_crS_rs113",
 				       'patch_size': PATCH_SIZE,
 				       'batch_of_patches_size': BATCH_OF_PATCHES_SIZE,
-			   		   'epochs': EPOCHS,
 					   'learning_rate': LEARNING_RATE
 					  }
 			 )
@@ -120,11 +108,13 @@ if USE_WANDB:
 
 
 # -----------------------------------------------
-# Checks
+# Safety checks
 # -----------------------------------------------
 
 assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
 assert TRAIN_PATCH_QUEUE_KWARGS['max_length'] % TRAIN_PATCH_QUEUE_KWARGS['samples_per_volume'] == 0
+assert FOCAL_POINT_STRIDE[0] < PATCH_SIZE[0]/2 and FOCAL_POINT_STRIDE[1] < PATCH_SIZE[1]/2 and FOCAL_POINT_STRIDE[2] < PATCH_SIZE[2]/2
+
 
 # -----------------------------------------------
 # Data pipeline
@@ -253,7 +243,7 @@ for epoch in range(start_epoch, start_epoch+EPOCHS):
 		# Aggregate and compute dice
 		pred_labelmap_volume = patch_aggregator.aggregate(patient_pred_patches_list) 
 		dice_score = volumetric_dice(pred_labelmap_volume, patient_dict['GTV-labelmap'].cpu().numpy())
-
+		break
 	epoch_val_loss /= len(val_volume_loader) * valid_patches_per_volume / BATCH_OF_PATCHES_SIZE
 	epoch_val_dice /= len(val_volume_loader)
 	
@@ -276,5 +266,5 @@ for epoch in range(start_epoch, start_epoch+EPOCHS):
 				  step=epoch)
 
 	# Checkpointing
-	# if epoch % CHECKPOINT_STEP == 0:
-	# 	torch.save(unet3d.state_dict(), f"{CHECK_POINT_DIR}/unet3d_pet_{epoch}.pt")
+	if epoch % CHECKPOINT_STEP == 0:
+		torch.save(unet3d.state_dict(), f"{CHECK_POINT_DIR}/unet3d_pet_{epoch}.pt")

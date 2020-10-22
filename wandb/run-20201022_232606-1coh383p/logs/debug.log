@@ -1,0 +1,47 @@
+2020-10-22 23:26:06,778 INFO    MainThread:12816 [wandb_init.py:_log_setup():292] Logging user logs to wandb/run-20201022_232606-1coh383p/logs/debug.log
+2020-10-22 23:26:06,778 INFO    MainThread:12816 [wandb_init.py:_log_setup():293] Logging internal logs to wandb/run-20201022_232606-1coh383p/logs/debug-internal.log
+2020-10-22 23:26:06,778 INFO    MainThread:12816 [wandb_setup.py:_flush():69] setting env: {}
+2020-10-22 23:26:06,778 INFO    MainThread:12816 [wandb_setup.py:_flush():69] setting user settings: {'save_code': False, 'email': 'chinmay.srao97@gmail.com'}
+2020-10-22 23:26:06,778 INFO    MainThread:12816 [wandb_setup.py:_flush():69] multiprocessing start_methods=fork,spawn,forkserver
+2020-10-22 23:26:08,441 INFO    MainThread:12816 [wandb_run.py:_console_start():1276] atexit reg
+2020-10-22 23:26:08,455 INFO    MainThread:12816 [wandb_run.py:_redirect():1146] redirect: SettingsConsole.REDIRECT
+2020-10-22 23:26:08,456 INFO    MainThread:12816 [wandb_run.py:_redirect():1149] Redirecting console.
+2020-10-22 23:26:08,456 INFO    MainThread:12816 [redirect.py:install():196] install start
+2020-10-22 23:26:08,462 INFO    MainThread:12816 [redirect.py:install():211] install stop
+2020-10-22 23:26:08,467 INFO    MainThread:12816 [redirect.py:install():196] install start
+2020-10-22 23:26:08,475 INFO    MainThread:12816 [redirect.py:install():211] install stop
+2020-10-22 23:26:08,481 INFO    MainThread:12816 [wandb_run.py:_redirect():1193] Redirects installed.
+2020-10-22 23:26:10,915 INFO    MainThread:12816 [wandb_watch.py:watch():32] Watching
+2020-10-22 23:26:10,931 INFO    MainThread:12816 [wandb_run.py:_config_callback():586] config_cb None None {'dataset': 'hecktor_train_crS_rs113', 'patch_size': [128, 128, 32], 'batch_of_patches_size': 2, 'learning_rate': 0.0003, '_wandb': {'cli_version': '0.10.7', 'python_version': '3.6.8', 'is_jupyter_run': False, 'is_kaggle_kernel': False, 'framework': 'torch'}, 'start_epoch': 10, 'epochs': 22}
+2020-10-22 23:26:18,818 INFO    MainThread:12816 [wandb_run.py:_atexit_cleanup():1249] got exitcode: 255
+2020-10-22 23:26:18,819 INFO    MainThread:12816 [wandb_run.py:_restore():1221] restore
+2020-10-22 23:26:18,820 INFO    MainThread:12816 [redirect.py:uninstall():215] uninstall start
+2020-10-22 23:26:18,823 INFO    MainThread:12816 [redirect.py:_stop():264] _stop: stdout
+2020-10-22 23:26:18,827 INFO    MainThread:12816 [redirect.py:_stop():270] _stop closed: stdout
+2020-10-22 23:26:18,827 INFO    stdout    :12816 [redirect.py:_pipe_relay():119] relay done saw last write: stdout
+2020-10-22 23:26:18,827 INFO    stdout    :12816 [redirect.py:_pipe_relay():135] relay done done: stdout
+2020-10-22 23:26:18,827 INFO    MainThread:12816 [redirect.py:_stop():276] _stop joined: stdout
+2020-10-22 23:26:18,827 INFO    MainThread:12816 [redirect.py:_stop():278] _stop rd closed: stdout
+2020-10-22 23:26:18,827 INFO    MainThread:12816 [redirect.py:uninstall():219] uninstall done
+2020-10-22 23:26:18,827 INFO    MainThread:12816 [redirect.py:uninstall():215] uninstall start
+2020-10-22 23:26:18,831 INFO    MainThread:12816 [redirect.py:_stop():264] _stop: stderr
+2020-10-22 23:26:18,834 INFO    MainThread:12816 [redirect.py:_stop():270] _stop closed: stderr
+2020-10-22 23:26:18,834 INFO    stderr    :12816 [redirect.py:_pipe_relay():119] relay done saw last write: stderr
+2020-10-22 23:26:18,834 INFO    stderr    :12816 [redirect.py:_pipe_relay():135] relay done done: stderr
+2020-10-22 23:26:18,837 INFO    MainThread:12816 [redirect.py:_stop():276] _stop joined: stderr
+2020-10-22 23:26:18,839 INFO    MainThread:12816 [redirect.py:_stop():278] _stop rd closed: stderr
+2020-10-22 23:26:18,841 INFO    MainThread:12816 [redirect.py:uninstall():219] uninstall done
+2020-10-22 23:26:18,853 INFO    MainThread:12816 [wandb_run.py:_wait_for_finish():1360] got exit ret: uuid: "8f4625e2436b4048826013d591ac9b0d"
+response {
+  poll_exit_response {
+    file_counts {
+      wandb_count: 1
+      media_count: 1
+    }
+    pusher_stats {
+      uploaded_bytes: 16092
+      total_bytes: 16092
+    }
+  }
+}
+

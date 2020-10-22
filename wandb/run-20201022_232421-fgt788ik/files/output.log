@@ -1,0 +1,16 @@
+Continuing from epoch 10
+wandb: ERROR Attempted to change value of key "epochs" from 12 to 22
+wandb: ERROR If you really want to do this, pass allow_val_change=True to config.update()
+Traceback (most recent call last):
+  File "/home/zk315372/Chinmay/Git/HN-tumour-segmentation/train.py", line 173, in <module>
+    'epochs': start_epoch + EPOCHS})
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/sdk/wandb_config.py", line 85, in update
+    self._update(d, allow_val_change)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/sdk/wandb_config.py", line 81, in _update
+    sanitized = self._sanitize_dict(parsed_dict, allow_val_change)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/sdk/wandb_config.py", line 127, in _sanitize_dict
+    k, v = self._sanitize(k, v, allow_val_change)
+  File "/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/wandb/sdk/wandb_config.py", line 147, in _sanitize
+    ).format(key, self._items[key], val)
+wandb.lib.config_util.ConfigError: Attempted to change value of key "epochs" from 12 to 22
+If you really want to do this, pass allow_val_change=True to config.update()
