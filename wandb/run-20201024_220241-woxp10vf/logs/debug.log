@@ -1,0 +1,15 @@
+2020-10-24 22:02:41,352 INFO    MainThread:2367 [wandb_init.py:_log_setup():292] Logging user logs to wandb/run-20201024_220241-woxp10vf/logs/debug.log
+2020-10-24 22:02:41,352 INFO    MainThread:2367 [wandb_init.py:_log_setup():293] Logging internal logs to wandb/run-20201024_220241-woxp10vf/logs/debug-internal.log
+2020-10-24 22:02:41,353 INFO    MainThread:2367 [wandb_setup.py:_flush():69] setting env: {}
+2020-10-24 22:02:41,353 INFO    MainThread:2367 [wandb_setup.py:_flush():69] setting user settings: {'save_code': False, 'email': 'chinmay.srao97@gmail.com'}
+2020-10-24 22:02:41,353 INFO    MainThread:2367 [wandb_setup.py:_flush():69] multiprocessing start_methods=fork,spawn,forkserver
+2020-10-24 22:02:43,419 INFO    MainThread:2367 [wandb_run.py:_console_start():1276] atexit reg
+2020-10-24 22:02:43,430 INFO    MainThread:2367 [wandb_run.py:_redirect():1146] redirect: SettingsConsole.REDIRECT
+2020-10-24 22:02:43,431 INFO    MainThread:2367 [wandb_run.py:_redirect():1149] Redirecting console.
+2020-10-24 22:02:43,431 INFO    MainThread:2367 [redirect.py:install():196] install start
+2020-10-24 22:02:43,435 INFO    MainThread:2367 [redirect.py:install():211] install stop
+2020-10-24 22:02:43,435 INFO    MainThread:2367 [redirect.py:install():196] install start
+2020-10-24 22:02:43,436 INFO    MainThread:2367 [redirect.py:install():211] install stop
+2020-10-24 22:02:43,436 INFO    MainThread:2367 [wandb_run.py:_redirect():1193] Redirects installed.
+2020-10-24 22:02:43,445 INFO    MainThread:2367 [wandb_run.py:_config_callback():586] config_cb None None {'dataset': 'hecktor_train_crS_rs113', 'patch_size': [128, 128, 32], '_wandb': {'cli_version': '0.10.7', 'python_version': '3.6.8', 'is_jupyter_run': False, 'is_kaggle_kernel': False, 'framework': 'torch'}, 'batch_of_patches_size': 2, 'learning_rate': 0.0003, 'start_epoch': 22, 'num_epochs': 34}
+2020-10-24 22:02:43,445 INFO    MainThread:2367 [wandb_watch.py:watch():32] Watching

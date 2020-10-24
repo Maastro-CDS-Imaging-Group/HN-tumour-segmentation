@@ -29,7 +29,7 @@ echo; echo
 
 # Execute script
 python_interpreter="../../maastro_env/bin/python3"
-python_file="./train.py"
+python_file="./training_script.py"
 
 $python_interpreter $python_file 
 

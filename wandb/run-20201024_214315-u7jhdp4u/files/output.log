@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/zk315372/Chinmay/Git/HN-tumour-segmentation/training_script.py", line 165, in <module>
+    INPUT_DATA_CONFIG, TRAINING_CONFIG, VALIDATION_CONFIG, LOGGING_CONFIG)
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/trainutils/trainer.py", line 75, in __init__
+    'learning_rate': self.learning_rate,
+AttributeError: 'Trainer' object has no attribute 'learning_rate'

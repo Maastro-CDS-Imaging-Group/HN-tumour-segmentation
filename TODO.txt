@@ -6,8 +6,8 @@ x Integrate patch aggregation and use for dice metric calculation for validation
 
 x Use WandB for logging. Then run the training script tests.
 - Improve WandB logging:
-    - Per epoch or per batch logging ?
     - Log system-related stuff 
+    - Log richer info - prediction, etc.
 
 - Build temp inference script that includes saving the predictions as NRRD
 
@@ -18,6 +18,6 @@ x Use WandB for logging. Then run the training script tests.
 
 
 
-- Once tests are completed, reorganize code
+- Reorganize code
     - YAML config files
     - Trainer and Inferer classes

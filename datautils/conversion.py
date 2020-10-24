@@ -50,3 +50,16 @@ def tensor2sitk(image_tensor, has_whd_ordering=True, spacing=(1,1,3)):
 	image_sitk.SetSpacing(spacing)
 	return image_sitk
 
+
+# Dim ordering conversion -- both functions do the exact same thing, but their names make things clear
+def whd2dhw(image):
+	if isinstance(image, np.ndarray):
+		 return image.transpose((2,1,0))
+	if isinstance(image, torch.Tensor):
+		 return image.permute(2,1,0)
+
+def dhw2whd(image):
+	if isinstance(image, np.ndarray):
+		 return image.transpose((2,1,0))
+	if isinstance(image, torch.Tensor):
+		 return image.permute(2,1,0)
