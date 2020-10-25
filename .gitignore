@@ -1,1 +1,5 @@
+# Model checkpoints
+model_checkpoints/*
+
+# Pycache
 **/__pycache__

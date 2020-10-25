@@ -4,6 +4,8 @@ x Integrate patch aggregation and use for dice metric calculation for validation
     x Dice and Jaccard for now. 
     - Then Surface Dice
 
+- Implement and test Dice loss
+
 x Use WandB for logging. Then run the training script tests.
 - Improve WandB logging:
     - Log system-related stuff 

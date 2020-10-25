@@ -1,10 +1,6 @@
-from trainutils.trainer import Trainer
+from tqdm import tqdm
 
+list1 = list(range(100,110))
 
-training_config, validation_config, logging_config = None, None, None
-
-trainer = Trainer(training_config, validation_config, logging_config)
-
-model = None
-
-trainer.train(model)
+for i,l in tqdm(enumerate(list1)):
+    print(i,l)

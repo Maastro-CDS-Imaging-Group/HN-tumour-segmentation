@@ -13,7 +13,7 @@ class PatchSampler3D():
     """
     Samples 3D patches of specified size using the specified sampling method.
     """
-    def __init__(self, patch_size, volume_size=(144,144,48), sampling='random', focal_point_stride=(1,1,1), padding=0):
+    def __init__(self, patch_size, volume_size=[144,144,48], sampling='random', focal_point_stride=[1,1,1], padding=[0,0,0]):
         self.patch_size = list(patch_size) # Specified in (W,H,D) order
         self.patch_size.reverse()    # Convert to (D,H,W) order
 
@@ -25,9 +25,10 @@ class PatchSampler3D():
         self.focal_point_stride = list(focal_point_stride) # Useful while using sequential sampling. Specified in (W,H,D) order
         self.focal_point_stride.reverse() # Convert to (D,H,W) order
 
-        self.padding = padding # One-sided zero padding, along each dim.
-        if padding > 0:
-            self.volume_size = [s + padding for s in self.volume_size]
+        self.padding = list(padding) # One-sided zero padding, along each dim.
+        self.padding.reverse() # Convert to (D,H,W) order
+        if self.padding != [0,0,0]:
+            self.volume_size = [self.volume_size[i] + self.padding[i] for i in range(3)]
 
 
     def get_samples(self, subject_dict, num_patches):
@@ -49,11 +50,11 @@ class PatchSampler3D():
                 volume = subject_dict[key].numpy()
 
                 if key == 'PET' or key == 'CT' or key == 'PET-CT': # The shape is (C,D,H,W) for PET and CT.
-                    if self.padding > 0:    volume = np.pad(volume, pad_width=[(0,0), (0,self.padding), (0,self.padding), (0,self.padding)])
+                    if self.padding != [0,0,0]:    volume = np.pad(volume, pad_width=[(0,0), (0,self.padding[0]), (0,self.padding[1]), (0,self.padding[2])])
                     patch[key] = volume[:, z1:z2, y1:y2, x1:x2]
 
                 elif key == 'GTV-labelmap':  # Labelmap has shape (D,H,W)
-                    if self.padding > 0:   volume = np.pad(volume, pad_width=[0,self.padding])
+                    if self.padding != [0,0,0]:   volume = np.pad(volume, pad_width=[(0,self.padding[0]), (0,self.padding[1]), (0,self.padding[2])])
                     patch[key] = volume[z1:z2, y1:y2, x1:x2]
 
                 patch[key] = torch.from_numpy(patch[key])
@@ -245,7 +246,7 @@ class PatchQueue(Dataset):
         return iter(subjects_loader)
 
 
-def get_num_valid_patches(patch_size, volume_size=(450,450,100), focal_point_stride=(1,1,1), padding=0):
+def get_num_valid_patches(patch_size, volume_size=[450,450,100], focal_point_stride=[1,1,1], padding=[0,0,0]):
 
     # Convert to (D,H,W) ordering.   [ (H,W) for patch_size and focal_point_stride if theu are 2D ]
     patch_size = list(patch_size)
@@ -254,9 +255,12 @@ def get_num_valid_patches(patch_size, volume_size=(450,450,100), focal_point_str
     volume_size = list(volume_size)
     volume_size.reverse()
 
+    padding = list(padding)
+    padding.reverse()
+
     # Increase the volume size to account for the padding used during patch sampling
-    if padding > 0:
-        volume_size = [s + padding for s in volume_size]
+    if padding != [0,0,0]:
+        volume_size = [volume_size[i] + padding[i] for i in range(3)]
 
     focal_point_stride = list(focal_point_stride)
     focal_point_stride.reverse()

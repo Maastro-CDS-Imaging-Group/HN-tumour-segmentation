@@ -19,7 +19,7 @@ from datasets.hecktor_unimodal_dataset import HECKTORUnimodalDataset
 from datautils.patch_sampling import PatchSampler3D, PatchQueue, get_num_valid_patches
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
 import nnmodules
-from trainutils.trainer import Trainer
+from trainer import Trainer
 
 
 # -----------------------------------------------
@@ -57,8 +57,8 @@ PREPROCESSOR_KWARGS = {
 
 PATCH_SIZE = (128, 128, 32)
 TRAIN_FOCAL_POINT_STRIDE = (4,4,4) # Anything above 4, and the patches do not cover the volume completely
-VAL_FOCAL_POINT_STRIDE = (20,20,20) # Sparser focalpoints, but padding ensures that the volume is covered completely
-VAL_PRE_SAMPLE_PADDING = 4
+VAL_FOCAL_POINT_STRIDE = (60, 60, 20) # Sparser focalpoints, but padding ensures that the volume is covered completely
+VAL_PRE_SAMPLE_PADDING = (44, 44, 4) # Padding to ensure the number of patches is 8
 BATCH_OF_PATCHES_SIZE = 2
 val_valid_patches_per_volume = get_num_valid_patches(PATCH_SIZE, 
                                                      VOLUME_SIZE, 
@@ -178,4 +178,4 @@ trainer = Trainer(unet3d,
 				 DEVICE,
 				 INPUT_DATA_CONFIG, TRAINING_CONFIG, VALIDATION_CONFIG, LOGGING_CONFIG)
 
-trainer.train()
+trainer.run_training()
