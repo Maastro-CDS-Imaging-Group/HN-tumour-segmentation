@@ -12,7 +12,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 """
 TODO 
-- Add dataset names in training and val configs
 - Incorporate input_data_config into training and validation steps
 
 """
@@ -46,11 +45,10 @@ class Trainer():
         self.start_epoch = 1
 
         if training_config['continue-from-checkpoint']:
-            logging.debug(f"Loading checkpoint: {training_config['checkpoint-filename']}")
             # Checkpoint name example - unet3d_pet_e005.pt
             self.model.load_state_dict(torch.load(f"{self.training_config['checkpoint-dir']}/{training_config['checkpoint-filename']}"))
             self.start_epoch = int(training_config['checkpoint-filename'].split('.')[0][-3:]) + 1
-            logging.debug(f"Continuing from epoch {self.start_epoch}")
+
 
         # Logging related
         if self.logging_config['enable-wandb']:
@@ -59,17 +57,31 @@ class Trainer():
 			           name=self.logging_config['wandb-run-name'],
 			           config=self.logging_config['wandb-config']
 			          )
-            wandb.config.update({'batch_of_patches_size': self.validation_config['batch-of-patches-size'],
-                                'learning_rate': self.training_config['learning-rate'],
-                                'start_epoch': self.start_epoch,
-                                'num_epochs': self.start_epoch + self.training_config['num-epochs']})
+            wandb.config.update({'dataset-name': self.training_config['dataset-name'],
+                                 'train-subset-name': self.training_config['subset-name'],
+                                 'val-subset-name': self.validation_config['subset-name'],
+                                'batch-of-patches-size': self.validation_config['batch-of-patches-size'],
+                                'learning-rate': self.training_config['learning-rate'],
+                                'start-epoch': self.start_epoch,
+                                'num-epochs': self.start_epoch + self.training_config['num-epochs']})
             wandb.watch(self.model)
+
+        # Log some stuff
+        logging.debug("Trainer initialized")
+        logging.debug(f"Train subset name: {self.training_config['train-subset-name']}")
+        logging.debug(f"Validation subset name: {self.validation_config['val-subset-name']}")
 
 
     def run_training(self):
         """
         Training loop
         """
+        
+
+        if self.training_config['continue-from-checkpoint']:
+            logging.debug(f"Loading checkpoint: {training_config['checkpoint-filename']}")
+            logging.debug(f"Continuing from epoch {self.start_epoch}")
+
         
         for epoch in range(self.start_epoch, self.start_epoch + self.training_config['num-epochs']):
             logging.debug(f"Epoch {epoch}")

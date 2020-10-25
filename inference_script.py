@@ -91,7 +91,8 @@ INPUT_DATA_CONFIG = {'is-bimodal': False,
                      'input-representation': None
                      } 				   
 
-INFERENCE_CONFIG = { 'dataset-name': 'hecktor-crS_rs113-CHUM',
+INFERENCE_CONFIG = { 'dataset-name': 'hecktor-crS_rs113',
+                     'subset-name': 'CHUM',
                      'patient-id-filepath': PATIENT_ID_FILEPATH,
                      'batch-of-patches-size': BATCH_OF_PATCHES_SIZE,
                      'valid-patches-per-volume': valid_patches_per_volume,
@@ -101,44 +102,48 @@ INFERENCE_CONFIG = { 'dataset-name': 'hecktor-crS_rs113-CHUM',
                      }
 
 
+def main():
+    # -----------------------------------------------
+    # Safety checks
+    # -----------------------------------------------
 
-# -----------------------------------------------
-# Safety checks
-# -----------------------------------------------
-
-assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
-assert valid_patches_per_volume % BATCH_OF_PATCHES_SIZE == 0
-
-
-# -----------------------------------------------
-# Data pipeline
-# -----------------------------------------------
-
-# Dataset
-preprocessor = Preprocessor(**PREPROCESSOR_KWARGS)
-inference_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='validation', preprocessor=preprocessor)
-
-# Patch based inference stuff
-volume_loader = DataLoader(inference_dataset, batch_size=1, shuffle=False)
-patch_sampler = PatchSampler3D(**PATCH_SAMPLER_KWARGS)
-patch_aggregator = PatchAggregator3D(**PATCH_AGGREGATOR_KWARGS)
+    assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
+    assert valid_patches_per_volume % BATCH_OF_PATCHES_SIZE == 0
 
 
-# -----------------------------------------------
-# Network
-# -----------------------------------------------
+    # -----------------------------------------------
+    # Data pipeline
+    # -----------------------------------------------
 
-unet3d = nnmodules.UNet3D(residual=RESIDUAL, normalization=NORMALIZATION).to(DEVICE)
+    # Dataset
+    preprocessor = Preprocessor(**PREPROCESSOR_KWARGS)
+    inference_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='validation', preprocessor=preprocessor)
+
+    # Patch based inference stuff
+    volume_loader = DataLoader(inference_dataset, batch_size=1, shuffle=False)
+    patch_sampler = PatchSampler3D(**PATCH_SAMPLER_KWARGS)
+    patch_aggregator = PatchAggregator3D(**PATCH_AGGREGATOR_KWARGS)
 
 
-# -----------------------------------------------
-# Training
-# -----------------------------------------------
+    # -----------------------------------------------
+    # Network
+    # -----------------------------------------------
 
-inferer = Inferer(unet3d, 
-                  volume_loader, patch_sampler, patch_aggregator,
-                  DEVICE,
-                  INPUT_DATA_CONFIG,
-                  INFERENCE_CONFIG)
+    unet3d = nnmodules.UNet3D(residual=RESIDUAL, normalization=NORMALIZATION).to(DEVICE)
 
-inferer.run_inference()
+
+    # -----------------------------------------------
+    # Training
+    # -----------------------------------------------
+
+    inferer = Inferer(unet3d, 
+                    volume_loader, patch_sampler, patch_aggregator,
+                    DEVICE,
+                    INPUT_DATA_CONFIG,
+                    INFERENCE_CONFIG)
+
+    inferer.run_inference()
+
+
+if __name__ == '__main__':
+    main()

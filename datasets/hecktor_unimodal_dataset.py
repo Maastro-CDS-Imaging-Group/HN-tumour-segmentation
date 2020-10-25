@@ -31,7 +31,7 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 			data_dir
 			patient_id_filepath
 			mode -- For default split: 'training', 'validation' -- (Takes CHUM for validation)
-					  For cross validation: 'cval-CHGJ-training', 'cval-CHGJ-validation', ...
+					  For cross validation: 'crossval-CHGJ-training', 'crossval-CHGJ-validation', ...
 			input_modality -- 'PET' or 'CT'
 			augment_data -- True or False
 		"""
@@ -48,12 +48,12 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 			self.patient_ids = [p_id for p_id in self.patient_ids if 'CHUM' in p_id]
 
 		# Cross validation option
-		if 'cval' in self.mode:
-			val_centre = self.mode.split('-')[1]
+		if 'crossval' in self.mode:
+			val_center = self.mode.split('-')[1]
 			if 'training' in self.mode:
-				self.patient_ids = [p_id for p_id in self.patient_ids if val_centre not in p_id]
+				self.patient_ids = [p_id for p_id in self.patient_ids if val_center not in p_id]
 			elif 'validation' in self.mode:
-				self.patient_ids = [p_id for p_id in self.patient_ids if val_centre in p_id]
+				self.patient_ids = [p_id for p_id in self.patient_ids if val_center in p_id]
 
 		self.input_modality = input_modality
 
@@ -104,7 +104,7 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 		input_image_np = self.preprocessor.standardize_intensity(input_image_np, modality=self.input_modality)
 
 		# Data augmentation
-		if self.augment_data:
+		if 'training' in self.mode and self.augment_data:
 			if random.random() < AUG_PROBABILITY:
 				input_image_np, GTV_labelmap_np = self.apply_transform(input_image_np, GTV_labelmap_np)
 
@@ -142,21 +142,3 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 		return subject_tio
 
 
-
-if __name__ == '__main__':
-
-	from datautils.preprocessing import Preprocessor
-
-	data_dir = "/home/chinmay/Datasets/HECKTOR/hecktor_train/crFH_rs113_hecktor_nii"
-	patient_id_filepath = "../hecktor_meta/patient_IDs_train.txt"
-	preprocessor = Preprocessor()
-
-	dataset = HECKTORUnimodalDataset(data_dir,
-			                          patient_id_filepath,
-			                          mode='training',
-			                          preprocessor=preprocessor,
-			                          input_modality='PET',
-			                          augment_data=False)
-
-	sample = dataset[0]
-	print(sample['PET'].shape)

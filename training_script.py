@@ -26,6 +26,7 @@ from trainer import Trainer
 # Constants
 # -----------------------------------------------
 
+DATASET_NAME = "hecktor-crS_rs113"
 DATA_DIR = "/home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train/crS_rs113_hecktor_nii"
 PATIENT_ID_FILEPATH = "./hecktor_meta/patient_IDs_train.txt"
 
@@ -103,11 +104,15 @@ NORMALIZATION = 'batch'   # None or 'batch'
 
 
 # Training configuration -- 
-INPUT_DATA_CONFIG = {'is-bimodal': False,
+INPUT_DATA_CONFIG = {
+	                 'is-bimodal': False,
 	                 'input-modality': 'PET', 
-                     'input-representation': None}
+                     'input-representation': None
+					 }
 
-TRAINING_CONFIG = {'loss-name': 'weighted-cross-entropy', 
+TRAINING_CONFIG = {'dataset-name': DATASET_NAME,
+	               'subset-name': 'crossval-CHUM-training',
+	               'loss-name': 'weighted-cross-entropy', 
                    'num-epochs': 12,
 				   'learning-rate': 0.0003,
 				   'enable-checkpointing': False,
@@ -117,12 +122,14 @@ TRAINING_CONFIG = {'loss-name': 'weighted-cross-entropy',
 				   'checkpoint-filename': "unet3d_pet_e021.pt"
 				   }
 
-VALIDATION_CONFIG = {'batch-of-patches-size': BATCH_OF_PATCHES_SIZE,
-                     'valid-patches-per-volume': val_valid_patches_per_volume}
+VALIDATION_CONFIG = {'subset-name': 'crossval-CHUM-validation',
+	                 'batch-of-patches-size': BATCH_OF_PATCHES_SIZE,
+                     'valid-patches-per-volume': val_valid_patches_per_volume
+					 }
 
 
-WANDB_CONFIG = {'dataset': "hecktor_train_crS_rs113",
-				'patch_size': PATCH_SIZE
+WANDB_CONFIG = {
+	            'patch-size': PATCH_SIZE
 		 	   }
 LOGGING_CONFIG = {'enable-wandb': False,
                    'wandb-entity': "cnmy-ro",
@@ -133,49 +140,54 @@ LOGGING_CONFIG = {'enable-wandb': False,
 
 
 
-# -----------------------------------------------
-# Safety checks
-# -----------------------------------------------
+def main():
+	# -----------------------------------------------
+	# Safety checks
+	# -----------------------------------------------
 
-assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
-assert TRAIN_PATCH_QUEUE_KWARGS['max_length'] % TRAIN_PATCH_QUEUE_KWARGS['samples_per_volume'] == 0
-assert val_valid_patches_per_volume % BATCH_OF_PATCHES_SIZE == 0
-
-
-# -----------------------------------------------
-# Data pipeline
-# -----------------------------------------------
-
-# Datasets
-preprocessor = Preprocessor(**PREPROCESSOR_KWARGS)
-train_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='training', preprocessor=preprocessor)
-val_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='validation', preprocessor=preprocessor)
-
-# Patch based training stuff
-train_sampler = PatchSampler3D(**TRAIN_PATCH_SAMPLER_KWARGS)
-train_patch_queue = PatchQueue(**TRAIN_PATCH_QUEUE_KWARGS, dataset=train_dataset, sampler=train_sampler)
-train_patch_loader = DataLoader(train_patch_queue, batch_size=BATCH_OF_PATCHES_SIZE)
-
-# Patch based inference stuff
-val_sampler = PatchSampler3D(**VAL_PATCH_SAMPLER_KWARGS)
-val_aggregator = PatchAggregator3D(**VAL_AGGREGATOR_KWARGS)
-val_volume_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+	assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
+	assert TRAIN_PATCH_QUEUE_KWARGS['max_length'] % TRAIN_PATCH_QUEUE_KWARGS['samples_per_volume'] == 0
+	assert val_valid_patches_per_volume % BATCH_OF_PATCHES_SIZE == 0
 
 
-# -----------------------------------------------
-# Network
-# -----------------------------------------------
+	# -----------------------------------------------
+	# Data pipeline
+	# -----------------------------------------------
 
-unet3d = nnmodules.UNet3D(residual=RESIDUAL, normalization=NORMALIZATION).to(DEVICE)
+	# Datasets
+	preprocessor = Preprocessor(**PREPROCESSOR_KWARGS)
+	train_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='training', preprocessor=preprocessor)
+	val_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='validation', preprocessor=preprocessor)
+
+	# Patch based training stuff
+	train_sampler = PatchSampler3D(**TRAIN_PATCH_SAMPLER_KWARGS)
+	train_patch_queue = PatchQueue(**TRAIN_PATCH_QUEUE_KWARGS, dataset=train_dataset, sampler=train_sampler)
+	train_patch_loader = DataLoader(train_patch_queue, batch_size=BATCH_OF_PATCHES_SIZE)
+
+	# Patch based inference stuff
+	val_sampler = PatchSampler3D(**VAL_PATCH_SAMPLER_KWARGS)
+	val_aggregator = PatchAggregator3D(**VAL_AGGREGATOR_KWARGS)
+	val_volume_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
 
-# -----------------------------------------------
-# Training
-# -----------------------------------------------
+	# -----------------------------------------------
+	# Network
+	# -----------------------------------------------
 
-trainer = Trainer(unet3d, 
-                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
-				 DEVICE,
-				 INPUT_DATA_CONFIG, TRAINING_CONFIG, VALIDATION_CONFIG, LOGGING_CONFIG)
+	unet3d = nnmodules.UNet3D(residual=RESIDUAL, normalization=NORMALIZATION).to(DEVICE)
 
-trainer.run_training()
+
+	# -----------------------------------------------
+	# Training
+	# -----------------------------------------------
+
+	trainer = Trainer(unet3d, 
+					train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
+					DEVICE,
+					INPUT_DATA_CONFIG, TRAINING_CONFIG, VALIDATION_CONFIG, LOGGING_CONFIG)
+
+	trainer.run_training()
+
+
+if __name__ == '__main__':
+	main()

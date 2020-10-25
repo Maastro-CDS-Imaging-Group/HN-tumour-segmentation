@@ -11,7 +11,7 @@ x Use WandB for logging. Then run the training script tests.
     - Log system-related stuff 
     - Log richer info - prediction, etc.
 
-- Build temp inference script that includes saving the predictions as NRRD
+x Build temp inference script that includes saving the predictions as NRRD
 
 - Efficiency improvement:
     - torch.cuda.empty_cache() -- read more about this

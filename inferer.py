@@ -42,7 +42,7 @@ class Inferer():
 
         with open(self.inference_config['patient-id-filepath'], 'r') as pf:
             self.patient_ids = [p_id for p_id in pf.read().split('\n') if p_id != '']
-        center = self.inference_config['dataset-name'].split('-')[2]
+        center = self.inference_config['subset-name']
         self.patient_ids = [p_id for p_id in self.patient_ids if center in p_id]
 
 
