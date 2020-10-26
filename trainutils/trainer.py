@@ -6,7 +6,7 @@ import wandb
 
 from trainutils.loss_functions import build_loss_function
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
-from trainutils.metrics import volumetric_dice
+from inferutils.metrics import volumetric_dice
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -18,6 +18,7 @@ TODO
 
 
 class Trainer():
+
     def __init__(self, 
                 model, 
                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
@@ -79,7 +80,7 @@ class Trainer():
         
 
         if self.training_config['continue-from-checkpoint']:
-            logging.debug(f"Loading checkpoint: {training_config['checkpoint-filename']}")
+            logging.debug(f"Loading checkpoint: {self.training_config['checkpoint-filename']}")
             logging.debug(f"Continuing from epoch {self.start_epoch}")
 
         
@@ -100,7 +101,7 @@ class Trainer():
 
                 # Accumulate loss value
                 epoch_train_loss += train_loss
-                break
+                
             epoch_train_loss /= len(self.train_patch_loader)
 
             # Clear CUDA cache
@@ -156,14 +157,14 @@ class Trainer():
     def _train_step(self, batch_of_patches):
 
         PET_patches = batch_of_patches['PET'].to(self.device)
-        GTV_labelmap_patches = batch_of_patches['GTV-labelmap'].long().to(self.device)
+        target_labelmap_patches = batch_of_patches['target-labelmap'].long().to(self.device)
 
         # Forward pass
         self.optimizer.zero_grad()
         pred_patches = self.model(PET_patches)
 
         # Compute loss
-        train_loss = self.criterion(pred_patches, GTV_labelmap_patches)
+        train_loss = self.criterion(pred_patches, target_labelmap_patches)
 
         # Generate loss gradients and back-propagate
         train_loss.backward()
@@ -192,7 +193,7 @@ class Trainer():
             # Take batch_of_patches_size number of patches at a time and push through the network
             for _ in range(0, self.validation_config['valid-patches-per-volume'], self.validation_config['batch-of-patches-size']):
                 PET_patches = torch.stack([patches_list[i]['PET'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)
-                GTV_labelmap_patches = torch.stack([patches_list[i]['GTV-labelmap'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).long().to(self.device)
+                target_labelmap_patches = torch.stack([patches_list[i]['target-labelmap'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).long().to(self.device)
 
                 # Forward pass
                 pred_patches = self.model(PET_patches)
@@ -201,7 +202,7 @@ class Trainer():
                 patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches)) 
 
                 # Compute validation loss
-                val_loss = self.criterion(pred_patches, GTV_labelmap_patches)
+                val_loss = self.criterion(pred_patches, target_labelmap_patches)
                 patient_val_loss += val_loss.item()
                 
             # Calculate avergae validation loss for this patient
@@ -209,6 +210,6 @@ class Trainer():
 
             # Aggregate and compute dice
             patient_pred_labelmap = self.val_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
-        patient_dice_score = volumetric_dice(patient_pred_labelmap.cpu().numpy(), patient_dict['GTV-labelmap'].cpu().numpy())
+        patient_dice_score = volumetric_dice(patient_pred_labelmap.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
 
         return patient_val_loss, patient_dice_score

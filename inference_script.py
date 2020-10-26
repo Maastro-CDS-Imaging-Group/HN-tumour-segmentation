@@ -16,7 +16,7 @@ from datasets.hecktor_unimodal_dataset import HECKTORUnimodalDataset
 from datautils.patch_sampling import PatchSampler3D, PatchQueue, get_num_valid_patches
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
 import nnmodules
-from inferer import Inferer
+from inferutils.inferer import Inferer
 
 
 # -----------------------------------------------
@@ -48,7 +48,7 @@ DATASET_KWARGS = {
 
 PREPROCESSOR_KWARGS = {
                      'smooth_sigma_mm': {'PET': 2.0, 'CT': None},
-                     'standardization_method': {'PET': 'clipping', 'CT': None},
+                     'normalization_method': {'PET': 'clip-and-rescale', 'CT': None},
                      'clipping_range': {'PET': [0 ,20], 'CT': None}
                      }
 
@@ -97,7 +97,8 @@ INFERENCE_CONFIG = { 'dataset-name': 'hecktor-crS_rs113',
                      'batch-of-patches-size': BATCH_OF_PATCHES_SIZE,
                      'valid-patches-per-volume': valid_patches_per_volume,
                      'model-filepath': './saved_models/unet3d_pet_e030.pt',
-                     'save-nrrd': True,
+                     'compute-metrics': True,
+                     'save-nrrd': False,
                      'output-save-dir': '/home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113'
                      }
 

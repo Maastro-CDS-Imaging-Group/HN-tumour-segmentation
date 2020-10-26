@@ -7,7 +7,7 @@ import SimpleITK as sitk
 
 from datautils.conversion import *
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
-from trainutils.metrics import volumetric_dice
+from inferutils.metrics import volumetric_dice
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -66,7 +66,7 @@ class Inferer():
         avg_dice /= len(self.volume_loader)
         dice_scores['average'] = avg_dice
         df = pd.DataFrame.from_dict(dice_scores, orient="index")
-        print(df)
+        logging.debug(df)
         df.to_csv(f"{self.inference_config['output-save-dir']}/dice_scores.csv")
 
 
@@ -84,8 +84,11 @@ class Inferer():
         with torch.no_grad(): # Disable autograd
             # Take batch_of_patches_size number of patches at a time and push through the network
             for _ in range(0, self.inference_config['valid-patches-per-volume'], self.inference_config['batch-of-patches-size']):
+                
                 PET_patches = torch.stack([patches_list[i]['PET'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
-                GTV_labelmap_patches = torch.stack([patches_list[i]['GTV-labelmap'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).long().to(self.device)
+                
+                if self.inference_config['compute-metrics']:
+                    target_labelmap_patches = torch.stack([patches_list[i]['target-labelmap'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).long().to(self.device)
 
                 # Forward pass
                 pred_patches = self.model(PET_patches)
@@ -93,8 +96,11 @@ class Inferer():
                 # Convert the predicted batch of probabilities to a list of labelmap patches, and store
                 patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches)) 
 
-            # Aggregate and compute dice
+            # Aggregate into full volume
             patient_pred_labelmap = self.patch_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
-        patient_dice_score = volumetric_dice(patient_pred_labelmap.cpu().numpy(), patient_dict['GTV-labelmap'].cpu().numpy())
+        
+        # Compute metrics, if needed
+        if self.inference_config['compute-metrics']:
+            patient_dice_score = volumetric_dice(patient_pred_labelmap.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
 
         return patient_pred_labelmap.cpu().numpy(), patient_dice_score

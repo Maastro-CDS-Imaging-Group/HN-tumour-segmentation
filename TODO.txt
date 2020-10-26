@@ -1,5 +1,7 @@
 x Integrate patch aggregation and use for dice metric calculation for validation
  
+- Make Trainer and Inferer take into account the input_modality / input_representation while fetching input patches
+
 - Implement validation metrics, use only on aggregated prediction volumes:
     x Dice and Jaccard for now. 
     - Then Surface Dice
