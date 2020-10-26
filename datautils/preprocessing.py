@@ -2,17 +2,17 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 
 
+
 # Histogram related constants
-# Standard range for PET is set to [0, 20] SUV and for CT is set to [-250,150] -- same as their clipping ranges
-DEFAULT_QUANTILES_CUTOFF_SUV = (0, 1)
-DEFAULT_QUANTILES_CUTOFF_HU = (0, 1)
+DEFAULT_QUANTILES_CUTOFF_SUV = (0, 0.999)
+DEFAULT_QUANTILES_CUTOFF_HU = (0, 0.999)
 
 
 class Preprocessor():
 
     def __init__(self,
                  smooth_sigma_mm={'PET': 2.0, 'CT': 0.0},
-                 standardization_method={'PET': 'clipping', 'CT': 'clipping'},
+                 normalization_method={'PET': 'clip-and-rescale', 'CT': 'clip-and-rescale'},
                  clipping_range={'PET': [0,20], 'CT': [-150,150]},
                  histogram_landmarks_path={'PET': None, 'CT': None}
                  ):
@@ -22,14 +22,15 @@ class Preprocessor():
         self.smooth_sigma_mm = smooth_sigma_mm
 
         # Standardization params
-        self.standardization_method = standardization_method
+        self.normalization_method = normalization_method
         self.clipping_range = clipping_range
         self.histogram_landmarks_path = histogram_landmarks_path
         self.landmarks_dict = {'PET': None, 'CT': None}
         self.quantiles_cutoff = {'PET': DEFAULT_QUANTILES_CUTOFF_SUV, 'CT': DEFAULT_QUANTILES_CUTOFF_HU}
+
         for key in ['PET', 'CT']:
-            if standardization_method[key] == 'clipping+histogram':
-                self.landmarks_dict[key] = np.load(histogram_landmarks_path[key])
+            if normalization_method[key] == 'histogram-mapping':
+                self.landmarks_dict[key] = np.loadtxt(histogram_landmarks_path[key])
 
 
     def set_spacing(self, spacing_dict):
@@ -38,20 +39,25 @@ class Preprocessor():
 
     def smoothing_filter(self, image_np, modality):
         sigma_mm = self.smooth_sigma_mm[modality]
-        sigma = (sigma_mm / self.spacing_dict['xy spacing'],
-                 sigma_mm / self.spacing_dict['xy spacing'],
-                 sigma_mm / self.spacing_dict['slice thickness'])
+
+        if sigma_mm is None:
+            return image_np
+
+        sigma = (sigma_mm / self.spacing_dict['xy-spacing'],
+                 sigma_mm / self.spacing_dict['xy-spacing'],
+                 sigma_mm / self.spacing_dict['slice-thickness'])
         image_np = gaussian_filter(image_np, sigma=sigma)
         return image_np
 
 
-    def standardize_intensity(self, image_np, modality):
-        if self.standardization_method[modality] == 'clipping':
+    def normalize_intensity(self, image_np, modality):
+        if self.normalization_method[modality] == 'clip-and-rescale':
             image_np = self._clip(image_np, modality)
-        elif self.standardization_method[modality] == 'clipping+histogram':
-            # Clip the image first to keep intensities in the required range, then apply histogram transform
-            image_np = self._clip(image_np, modality)
+            image_np = (image_np - image_np.min()) / (image_np.max() - image_np.min()) # Min-max rescaling
+
+        elif self.normalization_method[modality] == 'histogram-mapping':
             image_np = self._histogram_transform(image_np, modality)
+
         return image_np
 
     def _clip(self, image_np, modality):
@@ -105,10 +111,6 @@ class Preprocessor():
         percentiles = sorted(set(all_percentiles))
         return np.array(percentiles)
 
-
-    def rescale_to_unit_range(self, image_np):
-        image_np = (image_np - image_np.min()) / (image_np.max() - image_np.min())
-        return image_np
 
 
 if __name__ == '__main__':

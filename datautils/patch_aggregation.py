@@ -115,15 +115,15 @@ def get_pred_labelmap_patches_list(pred_prob_patches):
     Args:
         pred_prob_patches: Tensor. Batch of predicted probabilites patches. Shape (N,C,D,H,W)
     Returns:
-        pred_labelmap_patches_list: List of length N. Each element is a tensor of shape (D,H,W)
+        pred_labelmap_patches_list: List of length N. Each element is a tensor of hape (D,H,W)
     """
     pred_labelmap_patches_list = []
 
     for i in range(pred_prob_patches.shape[0]):
 
         # Convert to numpy, collapse channel dim for the predicted patch
-        pred_patch = pred_prob_patches[i] # Shape (C,D,H,W)
-        pred_patch = pred_patch.argmax(dim=0)  # Shape (D,H,W)
+        pred_patch = pred_prob_patches[i].numpy() # Shape (C,D,H,W)
+        pred_patch = np.argmax(pred_patch, axis=0)  # Shape (D,H,W)
 
         # Accumulate in the list
         pred_labelmap_patches_list.append(pred_patch)
@@ -131,3 +131,54 @@ def get_pred_labelmap_patches_list(pred_prob_patches):
     return pred_labelmap_patches_list
 
 
+
+if __name__ == '__main__':
+
+    import torch
+    from patch_sampling import PatchSampler3D, get_num_valid_patches
+
+    np.random.seed(0)
+
+    # Arguments specified in (W,H,D) ordering
+    volume_size = (144,144,48)
+    patch_size = (128,128,32)
+    focal_point_stride = (60,60,20)
+    padding = (44,44,4)
+    focal_point_stride = (10,10,10)
+    padding = (0,0,0)
+
+    patch_sampler = PatchSampler3D(patch_size,
+                                   sampling='sequential',
+                                   focal_point_stride=focal_point_stride,
+                                   padding=padding)
+
+    patch_aggregator = PatchAggregator3D(patch_size,
+                                        volume_size,
+                                        focal_point_stride,
+                                        overlap_handling=None,
+                                        unpadding=padding)
+
+    num_valid_patches = get_num_valid_patches(patch_size, volume_size, focal_point_stride, padding=padding)
+    print("Num patches:", num_valid_patches)
+
+    # (D,H,W) order followed internally
+    random_labelmap = np.random.randint(low=0, high=2, size=(volume_size[2], volume_size[1], volume_size[0]))
+    #print(random_labelmap.shape)
+
+    patches_list = patch_sampler.get_samples(subject_dict={'target-labelmap': torch.from_numpy(random_labelmap)},
+                                    num_patches=num_valid_patches)
+
+    patches_list = [patch['target-labelmap'] for patch in patches_list]
+
+    recovered_labelmap = patch_aggregator.aggregate(patches_list)
+
+    #print(random_labelmap.shape)
+
+
+    def dice(labelmap_1, labelmap_2):
+        assert labelmap_1.shape == labelmap_2.shape
+        intersection = np.sum(labelmap_1 * labelmap_2)
+        dice_score = 2 * intersection / (np.sum(labelmap_1) + np.sum(labelmap_2))
+        return dice_score
+
+    print(dice(random_labelmap, recovered_labelmap.numpy()))

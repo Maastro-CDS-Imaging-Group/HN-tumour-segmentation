@@ -53,7 +53,7 @@ class PatchSampler3D():
                     if self.padding != [0,0,0]:    volume = np.pad(volume, pad_width=[(0,0), (0,self.padding[0]), (0,self.padding[1]), (0,self.padding[2])])
                     patch[key] = volume[:, z1:z2, y1:y2, x1:x2]
 
-                elif key == 'GTV-labelmap':  # Labelmap has shape (D,H,W)
+                elif key == 'target-labelmap':  # Labelmap has shape (D,H,W)
                     if self.padding != [0,0,0]:   volume = np.pad(volume, pad_width=[(0,self.padding[0]), (0,self.padding[1]), (0,self.padding[2])])
                     patch[key] = volume[z1:z2, y1:y2, x1:x2]
 
@@ -67,7 +67,7 @@ class PatchSampler3D():
 
     def _sample_valid_focal_points(self, num_patches):
         # Use the labelmap to determine volume shape
-        #volume_shape = subject_dict['GTV-labelmap'].shape # (D,H,W)
+        #volume_shape = subject_dict['target-labelmap'].shape # (D,H,W)
         patch_size = np.array(self.patch_size).astype(np.float)
 
         # Get valid index range for focal points - upper-bound inclusive
@@ -77,14 +77,16 @@ class PatchSampler3D():
                            ]
 
         if self.sampling == 'random':
-            # randint takes inclusive range
+            # Uniform random over all valid focal points
+            # Note: randint() takes inclusive range
             zs = np.random.randint(valid_indx_range[0][0], valid_indx_range[1][0], num_patches)
             ys = np.random.randint(valid_indx_range[0][1], valid_indx_range[1][1], num_patches)
             xs = np.random.randint(valid_indx_range[0][2], valid_indx_range[1][2], num_patches)
             focal_points = [(zs[i], ys[i], xs[i]) for i in range(num_patches)]
 
         elif self.sampling == 'sequential':
-            # arange takes exlusive range
+            # Sequental sampling, used during inference
+            # Note: arange() takes exlusive range
             z_range = np.arange(valid_indx_range[0][0], valid_indx_range[1][0] + 1, self.focal_point_stride[0]).astype(np.int)
             y_range = np.arange(valid_indx_range[0][1], valid_indx_range[1][1] + 1, self.focal_point_stride[1]).astype(np.int)
             x_range = np.arange(valid_indx_range[0][2], valid_indx_range[1][2] + 1, self.focal_point_stride[2]).astype(np.int)
@@ -93,6 +95,7 @@ class PatchSampler3D():
             focal_points = [(zs[i], ys[i], xs[i]) for i in range(num_patches)]
 
         elif self.sampling == 'strided-random':
+            # Unofrm random sampling over spare valid focal points
             z_range = np.arange(valid_indx_range[0][0], valid_indx_range[1][0] + 1, self.focal_point_stride[0]).astype(np.int)
             y_range = np.arange(valid_indx_range[0][1], valid_indx_range[1][1] + 1, self.focal_point_stride[1]).astype(np.int)
             x_range = np.arange(valid_indx_range[0][2], valid_indx_range[1][2] + 1, self.focal_point_stride[2]).astype(np.int)
@@ -102,12 +105,25 @@ class PatchSampler3D():
             random_indxs = np.random.choice(len(focal_points), size=num_patches, replace=False)
             focal_points = [focal_points[i] for i in random_indxs]
 
+        elif self.sampling == 'ct-foreground-random':
+            # Random sampling from the CT foreground (any value >0)
+            # TODO
+            pass
+
+        elif self.sampling == 'gtv-biased-random':
+            # Random sampling with higher probability for GTV focal points
+            # TODO
+            pass
+
         return focal_points
 
 
 class PatchSampler2D():
     """
     Samples 2D axial slice patches of specified x-y size using the specified sampling method.
+
+    TODO: Old version. Make all the required changes based on PatchSampler3D.
+
     """
     def __init__(self, patch_size, sampling='random', focal_point_stride=(1,1)):
         self.patch_size = list(patch_size) # Specified in (W,H) order
@@ -146,7 +162,7 @@ class PatchSampler2D():
 
     def _sample_valid_focal_points(self, subject_dict, num_patches):
         # Use the labelmap to determine volume shape
-        volume_shape = subject_dict['GTV-labelmap'].shape # (D,H,W)
+        volume_shape = subject_dict['target-labelmap'].shape # (D,H,W)
         patch_size = np.array(self.patch_size).astype(np.float)
 
         # Get valid index range for focal points - upper-bound inclusive
