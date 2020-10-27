@@ -1,0 +1,6 @@
+
+in-channels: 1
+
+residual: True
+
+normalization: batch  # None or batch

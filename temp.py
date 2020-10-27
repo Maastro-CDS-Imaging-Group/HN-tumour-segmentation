@@ -1,6 +1,9 @@
-from tqdm import tqdm
+import yaml
 
-list1 = list(range(100,110))
+data_config_path = "./config_files/data_config/crS_rs113-unimodal_default.yaml"
 
-for i,l in tqdm(enumerate(list1)):
-    print(i,l)
+with open(data_config_path, 'r') as dconfig:
+    data_config = yaml.load(dconfig)
+
+print(data_config.keys())
+print(data_config.values())

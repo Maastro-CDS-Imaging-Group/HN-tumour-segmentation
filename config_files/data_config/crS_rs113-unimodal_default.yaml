@@ -1,0 +1,99 @@
+# --------------------------------------------------------
+# Constants
+# --------------------------------------------------------
+dataset-name: hecktor-crS_rs113
+data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR
+
+patient-id-filepath: ./hecktor_meta/patient_IDs_train.txt
+
+volume-size: 
+  - 144
+  - 144
+  - 48
+
+
+# --------------------------------------------------------
+# Patient dataset
+# --------------------------------------------------------
+patient-dataset:
+  input-modality: PET
+  augment-data: False
+
+
+# --------------------------------------------------------
+# Preprocessor
+# --------------------------------------------------------
+preprocessor:
+  smooth-sigma-mm: 
+    PET: 2.0
+    CT: None
+  normalization-method:
+    PET: clip-and-rescale
+    CT: clip-and-rescale
+  clipping-range:
+    PET:
+      - 0
+      - 20
+    CT:
+      - -150
+      - 150
+
+# --------------------------------------------------------
+# Patch settings
+# --------------------------------------------------------
+patch-size: 
+  - 128
+  - 128
+  - 32
+
+batch-of-patches-size: 2
+
+
+# --------------------------------------------------------
+# Training pipeline settings
+# --------------------------------------------------------
+
+# Patch sampler
+train-patch-sampler:
+  focal-point-stride:
+    - 4
+    - 4
+    - 4
+  sampling: strided-random
+
+# Patch queue
+train-patch-queue:
+  max-length: 128
+  samples-per-volume: 8
+  num-workers: 4
+  shuffle-subjects: True
+  shuffle-patches: True
+
+
+# --------------------------------------------------------
+# Validation/infernece pipeline settings
+# --------------------------------------------------------
+
+# Patch sampler
+val-patch-sampler:
+  focal-point-stride:
+    - 60
+    - 60
+    - 20
+  sampling: sequential
+  padding:
+    - 44
+    - 44
+    - 4
+
+# Patch aggregator 
+val-patch-aggregator:
+  focal-point-stride:
+    - 60
+    - 60
+    - 20
+  overlap-handling: union
+  unpadding:
+    - 44
+    - 44
+    - 4
