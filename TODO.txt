@@ -1,6 +1,7 @@
 
-- Implement config fetching code
-- Test the config system with training and inference
+x Implement config fetching code
+- Debug and test the config system with training and inference
+
 
 - Make Trainer and Inferer take into account the input_modality / input_representation while fetching input patches
 

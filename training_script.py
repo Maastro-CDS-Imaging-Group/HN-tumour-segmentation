@@ -8,7 +8,7 @@ Tests to perform:
 Current test: 2
 """
 
-import logging
+import logging, argparse
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -20,7 +20,7 @@ from datautils.patch_sampling import PatchSampler3D, PatchQueue, get_num_valid_p
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
 import nnmodules
 from trainutils.trainer import Trainer
-
+import config_utils
 
 # -----------------------------------------------
 # Constants
@@ -37,6 +37,13 @@ VOLUME_SIZE = (144, 144, 48)  # (W,H,D)
 # -----------------------------------------------
 # Configuration settings
 # -----------------------------------------------
+
+DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"
+DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
+DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-trial_run.yaml"
+
+
+# Old ---------------------------------------------
 
 # Hardware --
 DEVICE = 'cuda'
@@ -140,14 +147,44 @@ LOGGING_CONFIG = {'enable-wandb': False,
 
 
 
-def main():
+
+def get_cli_args():
+	parser = argparse.ArgumentParser()
+	
+	# Config filepaths
+	parser.add_argument("--data_config",
+	                    type=str,
+						help="Path to the data config file",
+						default=DEFAULT_DATA_CONFIG_FILE)
+	parser.add_argument("--nn_config",
+	                    type=str,
+						help="Path to the network config file",
+						default=DEFAULT_NN_CONFIG_FILE)
+	parser.add_argument("--trainval_config",
+	                    type=str,
+						help="Path to the trainval config file",
+						default=DEFAULT_TRAINVAL_CONFIG_FILE)
+				
+
+	# Overrides
+	parser.add_argument("--run-name",
+	                    type=str,
+						help="Name of the run",
+						default="trial-run")
+
+
+	args = parser.parse_args()
+	return args
+
+
+def main(global_config):
 	# -----------------------------------------------
 	# Safety checks
 	# -----------------------------------------------
 
-	assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
-	assert TRAIN_PATCH_QUEUE_KWARGS['max_length'] % TRAIN_PATCH_QUEUE_KWARGS['samples_per_volume'] == 0
-	assert val_valid_patches_per_volume % BATCH_OF_PATCHES_SIZE == 0
+	# assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
+	# assert TRAIN_PATCH_QUEUE_KWARGS['max_length'] % TRAIN_PATCH_QUEUE_KWARGS['samples_per_volume'] == 0
+	# assert val_valid_patches_per_volume % BATCH_OF_PATCHES_SIZE == 0
 
 
 	# -----------------------------------------------
@@ -155,18 +192,18 @@ def main():
 	# -----------------------------------------------
 
 	# Datasets
-	preprocessor = Preprocessor(**PREPROCESSOR_KWARGS)
-	train_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='training', preprocessor=preprocessor)
-	val_dataset = HECKTORUnimodalDataset(**DATASET_KWARGS, mode='validation', preprocessor=preprocessor)
+	preprocessor = Preprocessor(global_config['preprocessor-kwargs'])
+	train_dataset = HECKTORUnimodalDataset(global_config['train-dataset-kwargs'], preprocessor=preprocessor)
+	val_dataset = HECKTORUnimodalDataset(global_config['train-dataset-kwargs'], preprocessor=preprocessor)
 
 	# Patch based training stuff
-	train_sampler = PatchSampler3D(**TRAIN_PATCH_SAMPLER_KWARGS)
-	train_patch_queue = PatchQueue(**TRAIN_PATCH_QUEUE_KWARGS, dataset=train_dataset, sampler=train_sampler)
-	train_patch_loader = DataLoader(train_patch_queue, batch_size=BATCH_OF_PATCHES_SIZE)
+	train_sampler = PatchSampler3D(global_config['train-patch-sampler-kwargs'])
+	train_patch_queue = PatchQueue(global_config['train-patch-queue-kwargs'], dataset=train_dataset, sampler=train_sampler)
+	train_patch_loader = DataLoader(train_patch_queue, global_config['train-patch-loader-kwargs'])
 
 	# Patch based inference stuff
-	val_sampler = PatchSampler3D(**VAL_PATCH_SAMPLER_KWARGS)
-	val_aggregator = PatchAggregator3D(**VAL_AGGREGATOR_KWARGS)
+	val_sampler = PatchSampler3D(global_config['val-patch-sampler-kwargs'])
+	val_aggregator = PatchAggregator3D(global_config['val-patch-aggregator-kwargs'])
 	val_volume_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
 
@@ -174,7 +211,7 @@ def main():
 	# Network
 	# -----------------------------------------------
 
-	unet3d = nnmodules.UNet3D(residual=RESIDUAL, normalization=NORMALIZATION).to(DEVICE)
+	unet3d = nnmodules.UNet3D(global_config['nn-kwargs']).to(global_config['device'])
 
 
 	# -----------------------------------------------
@@ -183,11 +220,14 @@ def main():
 
 	trainer = Trainer(unet3d, 
 					train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
-					DEVICE,
-					INPUT_DATA_CONFIG, TRAINING_CONFIG, VALIDATION_CONFIG, LOGGING_CONFIG)
+					global_config['device'],
+					global_config['trainer-kwargs'])
 
 	trainer.run_training()
 
 
 if __name__ == '__main__':
-	main()
+	cli_args = get_cli_args()
+	global_config = config_utils.build_config(cli_args, training=True)
+
+	main(global_config)

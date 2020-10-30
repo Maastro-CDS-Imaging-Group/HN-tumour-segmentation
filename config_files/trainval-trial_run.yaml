@@ -6,12 +6,12 @@ device: cuda
 # Training config
 training-config:
   train-subset-name: crossval-CHUM-training
-  loss-name: weighted-cross-entropy
+  loss-name: wce
   num-epochs: 12
   learning-rate: 0.0003
   enable-checkpointing: False
   checkpoint-step: 3
-  checkpoint-dir: ./model_checkpoint
+  checkpoint-root-dir: ./model_checkpoint
   continue-from-checkpoint: True
   checkpoint-filename: unet3d_pet_e030.pt
 
@@ -23,6 +23,8 @@ validation-config:
 
 # WandB logging config
 logging-config:
+  run-name: training-script-test-run
+  enable-wandb: False
   wandb-entity: cnmy-ro
   wandb-project: hn-gtv-segmentation
-  wandb-run-name: training-script-test-run
+  

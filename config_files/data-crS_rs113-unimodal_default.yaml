@@ -11,6 +11,7 @@ volume-size:
   - 144
   - 48
 
+is-bimodal: False
 
 # --------------------------------------------------------
 # Patient dataset
@@ -19,6 +20,7 @@ patient-dataset:
   input-modality: PET
   augment-data: False
 
+# The train/val subset name is specified in trainval and infer configs
 
 # --------------------------------------------------------
 # Preprocessor
@@ -71,7 +73,7 @@ train-patch-queue:
 
 
 # --------------------------------------------------------
-# Validation/infernece pipeline settings
+# Validation/inference pipeline settings
 # --------------------------------------------------------
 
 # Patch sampler

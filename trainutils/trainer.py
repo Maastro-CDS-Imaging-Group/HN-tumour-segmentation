@@ -1,3 +1,4 @@
+import os
 import logging
 import numpy as np
 import torch
@@ -45,9 +46,13 @@ class Trainer():
         
         self.start_epoch = 1
 
+        self.checkpoint_dir = f"{self.training_config['checkpoint-root-dir']}/{self.logging_config['run-name']}"
+        if not os.path.isdir(self.checkpoint_dir):
+            os.mkdir(self.checkpoint_dir)
+
         if training_config['continue-from-checkpoint']:
             # Checkpoint name example - unet3d_pet_e005.pt
-            self.model.load_state_dict(torch.load(f"{self.training_config['checkpoint-dir']}/{training_config['checkpoint-filename']}"))
+            self.model.load_state_dict(torch.load(f"{self.checkpoint_dir}/{training_config['checkpoint-filename']}"))
             self.start_epoch = int(training_config['checkpoint-filename'].split('.')[0][-3:]) + 1
 
 
@@ -55,7 +60,7 @@ class Trainer():
         if self.logging_config['enable-wandb']:
             wandb.init(entity=self.logging_config['wandb-entity'],
 			           project=self.logging_config['wandb-project'],
-			           name=self.logging_config['wandb-run-name'],
+			           name=self.logging_config['run-name'],
 			           config=self.logging_config['wandb-config']
 			          )
             wandb.config.update({'dataset-name': self.training_config['dataset-name'],
@@ -78,6 +83,7 @@ class Trainer():
         Training loop
         """
         
+        logging.debug(f"RUN NAME: {self.logging_config['run-name']}")
 
         if self.training_config['continue-from-checkpoint']:
             logging.debug(f"Loading checkpoint: {self.training_config['checkpoint-filename']}")
@@ -101,7 +107,7 @@ class Trainer():
 
                 # Accumulate loss value
                 epoch_train_loss += train_loss
-                
+                break
             epoch_train_loss /= len(self.train_patch_loader)
 
             # Clear CUDA cache
@@ -151,7 +157,7 @@ class Trainer():
                     if self.input_data_config['in-bimodal']:    modality_str = 'petct'
                     else:    modality_str = self.input_modality.lower()
                     torch.save(self.model.state_dict(), 
-                               f"{self.training_config['checkpoint-dir']}/unet3d_{modality_str}_e{str(epoch).zfill(3)}.pt")
+                               f"{self.checkpoint_dir}/unet3d_{modality_str}_e{str(epoch).zfill(3)}.pt")
 
 
     def _train_step(self, batch_of_patches):
