@@ -1,29 +1,0 @@
-DEBUG:root:Trainer initialized
-DEBUG:root:Train subset name: crossval-CHUM-training
-DEBUG:root:Validation subset name: crossval-CHUM-validation
-DEBUG:root:Run name: trial-run
-DEBUG:root:Epoch 1
-DEBUG:root:Training ...
-  0%|          | 0/2320 [00:00<?, ?it/s]  0%|          | 0/2320 [00:01<?, ?it/s]
-DEBUG:root:Validating ...
-  0%|          | 0/56 [00:00<?, ?it/s](array([0, 1]), array([993408,   1920]))
-  2%|▏         | 1/56 [00:01<01:38,  1.80s/it](array([0, 1]), array([991876,   3452]))
-  4%|▎         | 2/56 [00:03<01:36,  1.79s/it](array([0, 1]), array([993490,   1838]))
-  5%|▌         | 3/56 [00:05<01:34,  1.79s/it](array([0, 1]), array([994867,    461]))
-  7%|▋         | 4/56 [00:07<01:32,  1.79s/it](array([0, 1]), array([993073,   2255]))
-  9%|▉         | 5/56 [00:08<01:31,  1.78s/it](array([0]), array([995328]))
- 11%|█         | 6/56 [00:10<01:29,  1.78s/it](array([0, 1]), array([983209,  12119]))
- 12%|█▎        | 7/56 [00:12<01:27,  1.78s/it](array([0, 1]), array([992837,   2491]))
- 14%|█▍        | 8/56 [00:14<01:25,  1.77s/it](array([0, 1]), array([994067,   1261]))
- 16%|█▌        | 9/56 [00:15<01:23,  1.77s/it](array([0, 1]), array([992737,   2591]))
- 18%|█▊        | 10/56 [00:17<01:23,  1.80s/it] 18%|█▊        | 10/56 [00:18<01:24,  1.85s/it]
-Traceback (most recent call last):
-  File "/home/zk315372/Chinmay/Git/HN-tumour-segmentation/training_script.py", line 97, in <module>
-    main(global_config)
-  File "/home/zk315372/Chinmay/Git/HN-tumour-segmentation/training_script.py", line 90, in main
-    trainer.run_training()
-  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/trainutils/trainer.py", line 120, in run_training
-    patient_val_loss, patient_dice_score = self._validation_step(patient_dict)
-  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/trainutils/trainer.py", line 235, in _validation_step
-    patient_val_loss += val_loss.item()
-KeyboardInterrupt

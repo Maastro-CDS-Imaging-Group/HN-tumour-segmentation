@@ -1,28 +1,0 @@
-Continuing from epoch 10
-DEBUG:root:Epoch 10
-DEBUG:root:Training ...
-  0%|          | 0/2320 [00:00<?, ?it/s]  0%|          | 0/2320 [00:01<?, ?it/s]
-DEBUG:root:Validating ...
-  0%|          | 0/56 [00:00<?, ?it/s]  0%|          | 0/56 [00:01<?, ?it/s]
-DEBUG:root:Training loss: 9.864327048176322e-06
-DEBUG:root:Validation loss: 0.0004400175031540649
-DEBUG:root:Validation dice: 0.0
-DEBUG:root:
-DEBUG:root:
-DEBUG:root:Epoch 11
-DEBUG:root:Training ...
-  0%|          | 0/2320 [00:00<?, ?it/s]  0%|          | 0/2320 [00:01<?, ?it/s]
-DEBUG:root:Validating ...
-  0%|          | 0/56 [00:00<?, ?it/s]  0%|          | 0/56 [00:01<?, ?it/s]
-DEBUG:root:Training loss: 1.5922179766770068e-05
-DEBUG:root:Validation loss: 0.0004265025574048715
-DEBUG:root:Validation dice: 0.0
-DEBUG:root:
-DEBUG:root:
-DEBUG:root:Epoch 12
-DEBUG:root:Training ...
-  0%|          | 0/2320 [00:00<?, ?it/s]  0%|          | 0/2320 [00:01<?, ?it/s]
-Traceback (most recent call last):
-  File "/home/zk315372/Chinmay/Git/HN-tumour-segmentation/train.py", line 203, in <module>
-    epoch_train_loss += train_loss.item()
-KeyboardInterrupt
