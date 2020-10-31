@@ -13,10 +13,9 @@ import nnmodules
 from inferutils.inferer import Inferer
 import config_utils
 
-# -----------------------------------------------
-# Constants
-# -----------------------------------------------
 
+
+# Constants
 DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"
 DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
 DEFAULT_INFERENCE_CONFIG_FILE = "./config_files/infer-default.yaml"
@@ -64,14 +63,19 @@ def main(global_config):
     # Network
     # -----------------------------------------------
 
-    unet3d = nnmodules.UNet3D(**global_config['nn-kwargs']).to(global_config['device'])
+    if global_config['nn-name'] == "unet3d":
+        unet3d = nnmodules.UNet3D(**global_config['nn-kwargs']).to(global_config['device'])
+
+    elif global_config['nn-name'] == "msam3d":
+		# TODO
+		pass
 
 
     # -----------------------------------------------
-    # Training
+    # Inference
     # -----------------------------------------------
 
-    inferer = Inferer(unet3d, 
+    inferer = Inferer(unet3d, global_config['nn-name'],
                     volume_loader, patch_sampler, patch_aggregator,
                     global_config['device'],
                     **global_config['inferer-kwargs'])

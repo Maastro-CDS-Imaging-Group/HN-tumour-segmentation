@@ -12,13 +12,11 @@ import nnmodules
 from trainutils.trainer import Trainer
 import config_utils
 
-# -----------------------------------------------
-# Constants
-# -----------------------------------------------
 
+# Constants
 DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"
 DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
-DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-trial_run.yaml"
+DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-default.yaml"
 
 
 def get_cli_args():
@@ -40,7 +38,7 @@ def get_cli_args():
 				
 
 	# Overrides
-	parser.add_argument("--run-name",
+	parser.add_argument("--run_name",
 	                    type=str,
 						help="Name of the run",
 						default="trial-run")
@@ -54,7 +52,7 @@ def main(global_config):
 	# -----------------------------------------------
 	# Data pipeline
 	# -----------------------------------------------
-
+	
 	# Datasets
 	preprocessor = Preprocessor(**global_config['preprocessor-kwargs'])
 	train_dataset = HECKTORUnimodalDataset(**global_config['train-dataset-kwargs'], preprocessor=preprocessor)
@@ -75,14 +73,18 @@ def main(global_config):
 	# Network
 	# -----------------------------------------------
 
-	unet3d = nnmodules.UNet3D(**global_config['nn-kwargs']).to(global_config['device'])
+	if global_config['nn-name'] == "unet3d":
+		unet3d = nnmodules.UNet3D(**global_config['nn-kwargs']).to(global_config['device'])
 
+	elif global_config['nn-name'] == "msam3d":
+		# TODO
+		pass
 
 	# -----------------------------------------------
 	# Training
 	# -----------------------------------------------
 
-	trainer = Trainer(unet3d, 
+	trainer = Trainer(unet3d, global_config['nn-name'],
 					train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
 					global_config['device'],
 					**global_config['trainer-kwargs'])

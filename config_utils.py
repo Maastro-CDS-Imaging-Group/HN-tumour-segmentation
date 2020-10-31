@@ -35,12 +35,15 @@ def build_config(cli_args, training=True):
             yaml_infer_config = yaml.safe_load(ic)
     
 
-    # Handle overrides --
+    # Handle overrides (Modify the YAML derived config dicts) -- 
     if training:
-        trainval_config['run-name'] = cli_args.run_name
+        if cli_args.run_name is not None:
+            yaml_trainval_config['logging-config']['run-name'] = cli_args.run_name
 
 
     # Get individual settings --    
+    global_config['nn-name'] = yaml_nn_config['nn-name']
+
     if training:
         global_config['device'] = yaml_trainval_config['device']
     else:
@@ -106,7 +109,7 @@ def build_config(cli_args, training=True):
     
 
     # Integrate NN kwargs into global config --
-    global_config['nn-kwargs'] = keys2kwargs(yaml_nn_config)
+    global_config['nn-kwargs'] = keys2kwargs(yaml_nn_config['nn-config'])
 
 
     # Construct the Trainer's or Inferer's kwargs  --
@@ -132,7 +135,8 @@ def build_config(cli_args, training=True):
         validation_config['valid-patches-per-volume'] = val_valid_patches_per_volume
 
         logging_config = yaml_trainval_config['logging-config']
-        logging_config['patch-size'] = yaml_data_config['patch-size']
+        logging_config['wandb-config'] = {}
+        logging_config['wandb-config']['patch-size'] = yaml_data_config['patch-size']
 
         # Add into the global config
         global_config['trainer-kwargs'] = {'input_data_config': input_data_config,

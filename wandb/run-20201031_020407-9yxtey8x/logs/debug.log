@@ -1,0 +1,47 @@
+2020-10-31 02:04:07,956 INFO    MainThread:15806 [wandb_init.py:_log_setup():292] Logging user logs to wandb/run-20201031_020407-9yxtey8x/logs/debug.log
+2020-10-31 02:04:07,956 INFO    MainThread:15806 [wandb_init.py:_log_setup():293] Logging internal logs to wandb/run-20201031_020407-9yxtey8x/logs/debug-internal.log
+2020-10-31 02:04:07,956 INFO    MainThread:15806 [wandb_setup.py:_flush():69] setting env: {}
+2020-10-31 02:04:07,956 INFO    MainThread:15806 [wandb_setup.py:_flush():69] setting user settings: {'save_code': False, 'email': 'chinmay.srao97@gmail.com'}
+2020-10-31 02:04:07,956 INFO    MainThread:15806 [wandb_setup.py:_flush():69] multiprocessing start_methods=fork,spawn,forkserver
+2020-10-31 02:04:10,825 INFO    MainThread:15806 [wandb_run.py:_console_start():1276] atexit reg
+2020-10-31 02:04:10,857 INFO    MainThread:15806 [wandb_run.py:_redirect():1146] redirect: SettingsConsole.REDIRECT
+2020-10-31 02:04:10,858 INFO    MainThread:15806 [wandb_run.py:_redirect():1149] Redirecting console.
+2020-10-31 02:04:10,858 INFO    MainThread:15806 [redirect.py:install():196] install start
+2020-10-31 02:04:10,870 INFO    MainThread:15806 [redirect.py:install():211] install stop
+2020-10-31 02:04:10,880 INFO    MainThread:15806 [redirect.py:install():196] install start
+2020-10-31 02:04:10,881 INFO    MainThread:15806 [redirect.py:install():211] install stop
+2020-10-31 02:04:10,889 INFO    MainThread:15806 [wandb_run.py:_redirect():1193] Redirects installed.
+2020-10-31 02:04:10,924 INFO    MainThread:15806 [wandb_run.py:_config_callback():586] config_cb None None {'patch-size': [128, 128, 32], '_wandb': {'cli_version': '0.10.7', 'python_version': '3.6.8', 'is_jupyter_run': False, 'is_kaggle_kernel': False, 'framework': 'torch'}, 'dataset-name': 'hecktor-crS_rs113', 'train-subset-name': 'crossval-CHUM-training', 'val-subset-name': 'crossval-CHUM-validation', 'batch-of-patches-size': 2, 'learning-rate': 0.0003, 'start-epoch': 1, 'num-epochs': 11}
+2020-10-31 02:04:10,924 INFO    MainThread:15806 [wandb_watch.py:watch():32] Watching
+2020-10-31 02:07:34,653 INFO    MainThread:15806 [wandb_run.py:_atexit_cleanup():1249] got exitcode: 1
+2020-10-31 02:07:34,654 INFO    MainThread:15806 [wandb_run.py:_restore():1221] restore
+2020-10-31 02:07:34,660 INFO    MainThread:15806 [redirect.py:uninstall():215] uninstall start
+2020-10-31 02:07:34,663 INFO    MainThread:15806 [redirect.py:_stop():264] _stop: stdout
+2020-10-31 02:07:34,667 INFO    MainThread:15806 [redirect.py:_stop():270] _stop closed: stdout
+2020-10-31 02:07:34,668 INFO    stdout    :15806 [redirect.py:_pipe_relay():119] relay done saw last write: stdout
+2020-10-31 02:07:34,674 INFO    stdout    :15806 [redirect.py:_pipe_relay():135] relay done done: stdout
+2020-10-31 02:07:34,678 INFO    MainThread:15806 [redirect.py:_stop():276] _stop joined: stdout
+2020-10-31 02:07:34,679 INFO    MainThread:15806 [redirect.py:_stop():278] _stop rd closed: stdout
+2020-10-31 02:07:34,679 INFO    MainThread:15806 [redirect.py:uninstall():219] uninstall done
+2020-10-31 02:07:34,679 INFO    MainThread:15806 [redirect.py:uninstall():215] uninstall start
+2020-10-31 02:07:34,679 INFO    MainThread:15806 [redirect.py:_stop():264] _stop: stderr
+2020-10-31 02:07:34,679 INFO    MainThread:15806 [redirect.py:_stop():270] _stop closed: stderr
+2020-10-31 02:07:34,679 INFO    stderr    :15806 [redirect.py:_pipe_relay():119] relay done saw last write: stderr
+2020-10-31 02:07:34,679 INFO    stderr    :15806 [redirect.py:_pipe_relay():135] relay done done: stderr
+2020-10-31 02:07:34,679 INFO    MainThread:15806 [redirect.py:_stop():276] _stop joined: stderr
+2020-10-31 02:07:34,683 INFO    MainThread:15806 [redirect.py:_stop():278] _stop rd closed: stderr
+2020-10-31 02:07:34,683 INFO    MainThread:15806 [redirect.py:uninstall():219] uninstall done
+2020-10-31 02:07:34,706 INFO    MainThread:15806 [wandb_run.py:_wait_for_finish():1360] got exit ret: uuid: "daa06ff8f7e6422b952e7b203a721573"
+response {
+  poll_exit_response {
+    file_counts {
+      wandb_count: 1
+      media_count: 1
+    }
+    pusher_stats {
+      uploaded_bytes: 16102
+      total_bytes: 16102
+    }
+  }
+}
+

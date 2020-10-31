@@ -27,11 +27,20 @@ echo; echo
 nvidia-smi
 echo; echo
 
-# Execute script
+# Execute training script
 python_interpreter="../../maastro_env/bin/python3"
 python_file="./training_script.py"
 
-$python_interpreter $python_file 
+data_config_file="./config_files/data-crS_rs113-unimodal_default.yaml"
+nn_config_file="./config_files/nn-unet3d_default.yaml"
+trainval_config_file="./config_files/trainval-default.yaml"
+
+run_name="histogram-mapping-test-run"
+
+$python_interpreter $python_file --data_config_file $data_config_file \
+                                 --nn_config_file $nn_config_file \
+                                 --trainval_config_file $trainval_config_file \
+                                 --run_name $run_name 
 
 
 #------------------------

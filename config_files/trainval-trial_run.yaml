@@ -13,7 +13,7 @@ training-config:
   checkpoint-step: 3
   checkpoint-root-dir: ./model_checkpoints
   continue-from-checkpoint: False
-  checkpoint-filename: unet3d_pet_e030.pt
+  load-checkpoint-filename: unet3d_pet_e030.pt
 
 
 # Validation config

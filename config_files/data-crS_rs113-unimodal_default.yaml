@@ -30,7 +30,7 @@ preprocessor:
     PET: 2.0
     CT: None
   normalization-method:
-    PET: clip-and-rescale
+    PET: histogram-mapping
     CT: clip-and-rescale
   clipping-range:
     PET:
@@ -39,6 +39,9 @@ preprocessor:
     CT:
       - -150
       - 150
+  histogram_landmarks_path:
+    PET: "./hecktor_meta/default_small_crop/crS_rs113_train-hist_landmarks_PET.txt"
+    CT: None
 
 # --------------------------------------------------------
 # Patch settings
@@ -66,7 +69,7 @@ train-patch-sampler:
 # Patch queue
 train-patch-queue:
   max-length: 128
-  samples-per-volume: 8
+  samples-per-volume: 32
   num-workers: 4
   shuffle-subjects: True
   shuffle-patches: True

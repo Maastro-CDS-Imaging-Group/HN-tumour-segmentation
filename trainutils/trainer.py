@@ -16,12 +16,13 @@ logging.basicConfig(level=logging.DEBUG)
 class Trainer():
 
     def __init__(self, 
-                model, 
+                model, nn_name,
                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
                 device,
                 input_data_config, training_config, validation_config, logging_config):
         
         self.model = model
+        self.nn_name = nn_name
         self.train_patch_loader = train_patch_loader
         self.val_volume_loader = val_volume_loader
         self.val_sampler = val_sampler
@@ -42,13 +43,13 @@ class Trainer():
         self.start_epoch = 1
 
         self.checkpoint_dir = f"{self.training_config['checkpoint-root-dir']}/{self.logging_config['run-name']}"
-        if not os.path.isdir(self.checkpoint_dir):
-            os.mkdir(self.checkpoint_dir)
+        # if not os.path.isdir(self.checkpoint_dir):
+        os.mkdirs(self.checkpoint_dir, exists_ok=True)
 
         if training_config['continue-from-checkpoint']:
             # Checkpoint name example - unet3d_pet_e005.pt
-            self.model.load_state_dict(torch.load(f"{self.checkpoint_dir}/{training_config['checkpoint-filename']}"))
-            self.start_epoch = int(training_config['checkpoint-filename'].split('.')[0][-3:]) + 1
+            self.model.load_state_dict(torch.load(f"{self.checkpoint_dir}/{training_config['load-checkpoint-filename']}"))
+            self.start_epoch = int(training_config['load-checkpoint-filename'].split('.')[0][-3:]) + 1
 
 
         # Logging related
@@ -59,8 +60,8 @@ class Trainer():
 			           config=self.logging_config['wandb-config']
 			          )
             wandb.config.update({'dataset-name': self.training_config['dataset-name'],
-                                 'train-subset-name': self.training_config['subset-name'],
-                                 'val-subset-name': self.validation_config['subset-name'],
+                                 'train-subset-name': self.training_config['train-subset-name'],
+                                 'val-subset-name': self.validation_config['val-subset-name'],
                                 'batch-of-patches-size': self.validation_config['batch-of-patches-size'],
                                 'learning-rate': self.training_config['learning-rate'],
                                 'start-epoch': self.start_epoch,
@@ -78,10 +79,10 @@ class Trainer():
         Training loop
         """
         
-        logging.debug(f"RUN NAME: {self.logging_config['run-name']}")
+        logging.debug(f"Run name: {self.logging_config['run-name']}")
 
         if self.training_config['continue-from-checkpoint']:
-            logging.debug(f"Loading checkpoint: {self.training_config['checkpoint-filename']}")
+            logging.debug(f"Loading checkpoint: {self.training_config['load-checkpoint-filename']}")
             logging.debug(f"Continuing from epoch {self.start_epoch}")
 
         
@@ -102,7 +103,7 @@ class Trainer():
 
                 # Accumulate loss value
                 epoch_train_loss += train_loss
-                
+                break
             epoch_train_loss /= len(self.train_patch_loader)
 
             # Clear CUDA cache
@@ -148,11 +149,17 @@ class Trainer():
 
             # Checkpointing --
             if self.training_config['enable-checkpointing']:
-                if epoch % self.training_config['checkpoint-step'] == 0:
-                    if self.input_data_config['in-bimodal']:    modality_str = 'petct'
-                    else:    modality_str = self.input_modality.lower()
-                    torch.save(self.model.state_dict(), 
-                               f"{self.checkpoint_dir}/unet3d_{modality_str}_e{str(epoch).zfill(3)}.pt")
+                if epoch % self.training_config['checkpoint-step'] == 0:                    
+                    
+                    if self.input_data_config['is-bimodal']:                            
+                        modality_str = 'petct'
+                    else:
+                        modality_str = self.input_data_config['input-modality'].lower()
+
+                    # Example checkpoint name: unet3d_pet_e005.pt 
+                    checkpoint_filename = f"{self.nn_name}_{modality_str}_e{str(epoch).zfill(3)}.pt"
+                    logging.debug(f"Saving checkpoint: {checkpoint_filename}")
+                    torch.save(self.model.state_dict(), f"{self.checkpoint_dir}/{checkpoint_filename}")
 
 
     def _train_step(self, batch_of_patches):

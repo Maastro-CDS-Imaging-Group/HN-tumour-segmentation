@@ -1,6 +1,9 @@
 
-in-channels: 1
+nn-name: unet3d
 
-residual: True
+nn-config:
+  in-channels: 1
 
-normalization: batch  # None or batch
+  residual: True
+
+  normalization: batch  # None or batch

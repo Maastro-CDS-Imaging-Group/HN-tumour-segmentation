@@ -1,5 +1,10 @@
 # Model checkpoints
-model_checkpoints/*.pt
+model_checkpoints/*
+
+
+# WandB stuff
+wandb/*
+
 
 # Pycache
 **/__pycache__

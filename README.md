@@ -1,1 +1,1 @@
-# HN-tumour-segmentation
+# Head-and-Neck GTV Segmentation on PET-CT scans

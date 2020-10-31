@@ -1,0 +1,22 @@
+DEBUG:root:Trainer initialized
+DEBUG:root:Train subset name: crossval-CHUM-training
+DEBUG:root:Validation subset name: crossval-CHUM-validation
+DEBUG:root:Run name: trial-run
+DEBUG:root:Epoch 1
+DEBUG:root:Training ...
+  0%|          | 0/2320 [00:00<?, ?it/s]  0%|          | 0/2320 [00:01<?, ?it/s]
+DEBUG:root:Validating ...
+  0%|          | 0/56 [00:00<?, ?it/s](array([0, 1]), array([993408,   1920]))
+  2%|▏         | 1/56 [00:01<01:38,  1.79s/it](array([0, 1]), array([991876,   3452]))
+  4%|▎         | 2/56 [00:03<01:36,  1.78s/it](array([0, 1]), array([993490,   1838]))
+  5%|▌         | 3/56 [00:05<01:33,  1.77s/it]  5%|▌         | 3/56 [00:06<01:50,  2.09s/it]
+Traceback (most recent call last):
+  File "/home/zk315372/Chinmay/Git/HN-tumour-segmentation/training_script.py", line 101, in <module>
+    main(global_config)
+  File "/home/zk315372/Chinmay/Git/HN-tumour-segmentation/training_script.py", line 94, in main
+    trainer.run_training()
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/trainutils/trainer.py", line 121, in run_training
+    patient_val_loss, patient_dice_score = self._validation_step(patient_dict)
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/trainutils/trainer.py", line 231, in _validation_step
+    patient_val_loss += val_loss.item()
+KeyboardInterrupt
