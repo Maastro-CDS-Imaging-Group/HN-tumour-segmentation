@@ -2,7 +2,7 @@
 # Constants
 # --------------------------------------------------------
 dataset-name: hecktor-crS_rs113
-data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR
+data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train
 
 patient-id-filepath: ./hecktor_meta/patient_IDs_train.txt
 
@@ -20,7 +20,7 @@ patient-dataset:
   input-modality: PET
   augment-data: False
 
-# The train/val subset name is specified in trainval and infer configs
+# The train/val/inference subset name is specified in trainval and infer config files
 
 # --------------------------------------------------------
 # Preprocessor

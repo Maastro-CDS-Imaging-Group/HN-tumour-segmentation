@@ -1,13 +1,3 @@
-"""
-Tests to perform: 
-
-1. Whether the training mechanism is working or not - Does the train loss decrease over epochs? -- Pass
-2. If the network really getting good - Does the validation loss decrease over epochs ?
-
-
-Current test: 2
-"""
-
 import logging, argparse
 import numpy as np
 import torch
@@ -26,141 +16,24 @@ import config_utils
 # Constants
 # -----------------------------------------------
 
-DATASET_NAME = "hecktor-crS_rs113"
-DATA_DIR = "/home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train/crS_rs113_hecktor_nii"
-PATIENT_ID_FILEPATH = "./hecktor_meta/patient_IDs_train.txt"
-
-CLASS_FREQUENCIES = {0: 199156267, 1: 904661}
-VOLUME_SIZE = (144, 144, 48)  # (W,H,D)
-
-
-# -----------------------------------------------
-# Configuration settings
-# -----------------------------------------------
-
 DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"
 DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
 DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-trial_run.yaml"
-
-
-# Old ---------------------------------------------
-
-# Hardware --
-DEVICE = 'cuda'
-
-
-# Data configuration --
-DATASET_KWARGS = {
-                'data_dir': DATA_DIR,
-                'patient_id_filepath': PATIENT_ID_FILEPATH,
-                'input_modality': 'PET',
-                'augment_data': False
-                }
-
-PREPROCESSOR_KWARGS = {
-                     'smooth_sigma_mm': {'PET': 2.0, 'CT': None},
-                     'normalization_method': {'PET': 'clip-and-rescale', 'CT': None},
-                     'clipping_range': {'PET': [0 ,20], 'CT': None}
-                     }
-
-PATCH_SIZE = (128, 128, 32)
-TRAIN_FOCAL_POINT_STRIDE = (4,4,4) # Anything above 4, and the patches do not cover the volume completely
-VAL_FOCAL_POINT_STRIDE = (60, 60, 20) # Sparser focalpoints, but padding ensures that the volume is covered completely
-VAL_PRE_SAMPLE_PADDING = (44, 44, 4) # Padding to ensure the number of patches is 8
-BATCH_OF_PATCHES_SIZE = 2
-val_valid_patches_per_volume = get_num_valid_patches(PATCH_SIZE, 
-                                                     VOLUME_SIZE, 
-													 focal_point_stride=VAL_FOCAL_POINT_STRIDE,
-													 padding=VAL_PRE_SAMPLE_PADDING)
-print("val_valid_patches_per_volume:", val_valid_patches_per_volume)
-
-TRAIN_PATCH_SAMPLER_KWARGS = {
-	                          'patch_size': PATCH_SIZE, 
-							  'volume_size': VOLUME_SIZE,
-                              'sampling': 'strided-random',
-							  'focal_point_stride': TRAIN_FOCAL_POINT_STRIDE
-                             }
-TRAIN_PATCH_QUEUE_KWARGS = {
-		                  'max_length': 128,
-		                  'samples_per_volume': 32,
-		                  'num_workers': 4,
-		                  'shuffle_subjects': True,
-		                  'shuffle_patches': True
-	                     }
-
-
-VAL_PATCH_SAMPLER_KWARGS = {
-	                         'patch_size': PATCH_SIZE, 
-							 'volume_size': VOLUME_SIZE,
-                             'sampling': 'sequential',
-							 'focal_point_stride': VAL_FOCAL_POINT_STRIDE,
-							 'padding': VAL_PRE_SAMPLE_PADDING
-                           }
-
-VAL_AGGREGATOR_KWARGS = {
-	                    'patch_size': PATCH_SIZE,
-						'volume_size': VOLUME_SIZE,
-						'focal_point_stride': VAL_FOCAL_POINT_STRIDE,
-						'overlap_handling': 'union',
-						'unpadding': VAL_PRE_SAMPLE_PADDING
-                        }
-
-# Network configuration --
-RESIDUAL = True
-NORMALIZATION = 'batch'   # None or 'batch'
-
-
-# Training configuration -- 
-INPUT_DATA_CONFIG = {
-	                 'is-bimodal': False,
-	                 'input-modality': 'PET', 
-                     'input-representation': None
-					 }
-
-TRAINING_CONFIG = {'dataset-name': DATASET_NAME,
-	               'train-subset-name': 'crossval-CHUM-training',
-	               'loss-name': 'weighted-cross-entropy', 
-                   'num-epochs': 12,
-				   'learning-rate': 0.0003,
-				   'enable-checkpointing': False,
-				   'checkpoint-step': 3,
-				   'checkpoint-dir': "./model_checkpoints",
-				   'continue-from-checkpoint': True,
-				   'checkpoint-filename': "unet3d_pet_e030.pt"
-				   }
-
-VALIDATION_CONFIG = {'val-subset-name': 'crossval-CHUM-validation',
-	                 'batch-of-patches-size': BATCH_OF_PATCHES_SIZE,
-                     'valid-patches-per-volume': val_valid_patches_per_volume
-					 }
-
-
-WANDB_CONFIG = {
-	            'patch-size': PATCH_SIZE
-		 	   }
-LOGGING_CONFIG = {'enable-wandb': False,
-                   'wandb-entity': "cnmy-ro",
-				   'wandb-project': 'hn-gtv-segmentation',
-				   'wandb-run-name': "training-script-test-run",
-				   'wandb-config': WANDB_CONFIG
-				 }
-
-
 
 
 def get_cli_args():
 	parser = argparse.ArgumentParser()
 	
 	# Config filepaths
-	parser.add_argument("--data_config",
+	parser.add_argument("--data_config_file",
 	                    type=str,
 						help="Path to the data config file",
 						default=DEFAULT_DATA_CONFIG_FILE)
-	parser.add_argument("--nn_config",
+	parser.add_argument("--nn_config_file",
 	                    type=str,
 						help="Path to the network config file",
 						default=DEFAULT_NN_CONFIG_FILE)
-	parser.add_argument("--trainval_config",
+	parser.add_argument("--trainval_config_file",
 	                    type=str,
 						help="Path to the trainval config file",
 						default=DEFAULT_TRAINVAL_CONFIG_FILE)
@@ -179,31 +52,22 @@ def get_cli_args():
 
 def main(global_config):
 	# -----------------------------------------------
-	# Safety checks
-	# -----------------------------------------------
-
-	# assert PATCH_SIZE[0] % 2**4 == 0 and PATCH_SIZE[1] % 2**4 == 0 and PATCH_SIZE[2] % 2**4 == 0
-	# assert TRAIN_PATCH_QUEUE_KWARGS['max_length'] % TRAIN_PATCH_QUEUE_KWARGS['samples_per_volume'] == 0
-	# assert val_valid_patches_per_volume % BATCH_OF_PATCHES_SIZE == 0
-
-
-	# -----------------------------------------------
 	# Data pipeline
 	# -----------------------------------------------
 
 	# Datasets
-	preprocessor = Preprocessor(global_config['preprocessor-kwargs'])
-	train_dataset = HECKTORUnimodalDataset(global_config['train-dataset-kwargs'], preprocessor=preprocessor)
-	val_dataset = HECKTORUnimodalDataset(global_config['train-dataset-kwargs'], preprocessor=preprocessor)
+	preprocessor = Preprocessor(**global_config['preprocessor-kwargs'])
+	train_dataset = HECKTORUnimodalDataset(**global_config['train-dataset-kwargs'], preprocessor=preprocessor)
+	val_dataset = HECKTORUnimodalDataset(**global_config['val-dataset-kwargs'], preprocessor=preprocessor)
 
 	# Patch based training stuff
-	train_sampler = PatchSampler3D(global_config['train-patch-sampler-kwargs'])
-	train_patch_queue = PatchQueue(global_config['train-patch-queue-kwargs'], dataset=train_dataset, sampler=train_sampler)
-	train_patch_loader = DataLoader(train_patch_queue, global_config['train-patch-loader-kwargs'])
+	train_sampler = PatchSampler3D(**global_config['train-patch-sampler-kwargs'])
+	train_patch_queue = PatchQueue(**global_config['train-patch-queue-kwargs'], dataset=train_dataset, sampler=train_sampler)
+	train_patch_loader = DataLoader(train_patch_queue, **global_config['train-patch-loader-kwargs'])
 
 	# Patch based inference stuff
-	val_sampler = PatchSampler3D(global_config['val-patch-sampler-kwargs'])
-	val_aggregator = PatchAggregator3D(global_config['val-patch-aggregator-kwargs'])
+	val_sampler = PatchSampler3D(**global_config['val-patch-sampler-kwargs'])
+	val_aggregator = PatchAggregator3D(**global_config['val-patch-aggregator-kwargs'])
 	val_volume_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
 
@@ -211,7 +75,7 @@ def main(global_config):
 	# Network
 	# -----------------------------------------------
 
-	unet3d = nnmodules.UNet3D(global_config['nn-kwargs']).to(global_config['device'])
+	unet3d = nnmodules.UNet3D(**global_config['nn-kwargs']).to(global_config['device'])
 
 
 	# -----------------------------------------------
@@ -221,7 +85,7 @@ def main(global_config):
 	trainer = Trainer(unet3d, 
 					train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
 					global_config['device'],
-					global_config['trainer-kwargs'])
+					**global_config['trainer-kwargs'])
 
 	trainer.run_training()
 

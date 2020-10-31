@@ -3,14 +3,6 @@ import yaml
 from datautils.patch_sampling import get_num_valid_patches
 
 
-def run_safety_checks():
-    """
-    Simple assertions
-    """
-    # TODO
-    pass
-
-
 def keys2kwargs(config_dict):
     """
     Eg: {'input-modality': 'PET'} --> {'input_modality' : 'PET'}
@@ -30,92 +22,134 @@ def build_config(cli_args, training=True):
     global_config = {}
 
 
-    # Read YAML config files
-    data_config = yaml.safe_load(cli_args.data_config)
-    nn_config = yaml.safe_load(cli_args.nn_config)
+    # Read YAML config files --
+    with open(cli_args.data_config_file, 'r') as dc:
+        yaml_data_config = yaml.safe_load(dc)
+    with open(cli_args.nn_config_file, 'r') as nnc:
+        yaml_nn_config = yaml.safe_load(nnc)
     if training:
-        trainval_config = yaml.safe_load(cli_args.trainval_config)
+        with open(cli_args.trainval_config_file, 'r') as tvc:
+            yaml_trainval_config = yaml.safe_load(tvc)
     else:
-        infer_config = yaml.safe_load(cli_args.infer_config)
+        with open(cli_args.infer_config_file, 'r') as ic:
+            yaml_infer_config = yaml.safe_load(ic)
     
 
-    # Handle overrides
+    # Handle overrides --
     if training:
         trainval_config['run-name'] = cli_args.run_name
 
 
-    # Get individual settings
-    val_valid_patches_per_volume = get_num_valid_patches(data_config['patch-size'], 
-                                                     data_config['volume-size'], 
-													 focal_point_stride=data_config['val-patch-sampler']['focal-point-stride'],
-													 padding=data_config['val-patch-sampler']['padding'])
+    # Get individual settings --    
     if training:
-        global_config['device'] = trainval_config['device']
+        global_config['device'] = yaml_trainval_config['device']
     else:
-        global_config['device'] = infer_config['device']
+        global_config['device'] = yaml_infer_config['device']
 
 
-    # Construct kwargs dicts for the data pipeline
-    preprocessor_kwargs = keys2kwargs(data_config['preprocessor'])
+    # Construct kwargs dicts for the data pipeline --
+    preprocessor_kwargs = keys2kwargs(yaml_data_config['preprocessor'])
+    global_config['preprocessor-kwargs'] = preprocessor_kwargs
+
+    data_dir = f"{yaml_data_config['data-root-dir']}/{yaml_data_config['dataset-name'].split('-')[1]}_hecktor_nii"
 
     if training:
-        train_dataset_kwargs = keys2kwargs(data_config['patient-dataset'])
-        train_dataset_kwargs['mode'] = trainval_config['training-config']['train-subset-name']
-        train_patch_sampler_kwargs = keys2kwargs(data_config['train-patch-sampler'])      
-        train_patch_queue_kwargs = keys2kwargs(data_config['train-patch-queue'])
-    
-        val_dataset_kwargs = keys2kwargs(data_config['patient-dataset'])
-        val_dataset_kwargs['mode'] = trainval_config['validation-config']['val-subset-name']                
-        val_patch_sampler_kwargs = data_config['val-patch-sampler']        
-        val_patch_aggregator_kwargs = data_config['val-patch-aggregator']
+        train_dataset_kwargs = keys2kwargs(yaml_data_config['patient-dataset'])
+        train_dataset_kwargs['data_dir'] = data_dir
+        train_dataset_kwargs['patient_id_filepath'] = yaml_data_config['patient-id-filepath']
+        train_dataset_kwargs['mode'] = yaml_trainval_config['training-config']['train-subset-name']
+        
+        train_patch_sampler_kwargs = keys2kwargs(yaml_data_config['train-patch-sampler'])      
+        train_patch_sampler_kwargs['patch_size'] = yaml_data_config['patch-size']
 
-        # Integrate into the global config
+        train_patch_queue_kwargs = keys2kwargs(yaml_data_config['train-patch-queue'])
+
+        train_patch_loader_kwargs = {'batch_size': yaml_data_config['batch-of-patches-size']}
+    
+        val_dataset_kwargs = keys2kwargs(yaml_data_config['patient-dataset'])
+        val_dataset_kwargs['data_dir'] = data_dir
+        val_dataset_kwargs['patient_id_filepath'] = yaml_data_config['patient-id-filepath']  
+        val_dataset_kwargs['mode'] = yaml_trainval_config['validation-config']['val-subset-name']       
+               
+        val_patch_sampler_kwargs = keys2kwargs(yaml_data_config['val-patch-sampler'])    
+        val_patch_sampler_kwargs['patch_size'] = yaml_data_config['patch-size']    
+        
+        val_patch_aggregator_kwargs = keys2kwargs(yaml_data_config['val-patch-aggregator'])
+        val_patch_aggregator_kwargs['patch_size'] = yaml_data_config['patch-size']
+
+        # Add into the global config
         global_config['train-dataset-kwargs'] = train_dataset_kwargs
         global_config['train-patch-sampler-kwargs'] = train_patch_sampler_kwargs
         global_config['train-patch-queue-kwargs'] = train_patch_queue_kwargs
+        global_config['train-patch-loader-kwargs'] = train_patch_loader_kwargs
         global_config['val-dataset-kwargs'] = val_dataset_kwargs
         global_config['val-patch-sampler-kwargs'] = val_patch_sampler_kwargs
         global_config['val-patch-aggregator-kwargs'] = val_patch_aggregator_kwargs
 
 
     else:
-        # TODO
-        pass
-
+        dataset_kwargs = keys2kwargs(yaml_data_config['patient-dataset'])
+        dataset_kwargs['data_dir'] = data_dir
+        dataset_kwargs['patient_id_filepath'] = yaml_data_config['patient-id-filepath']  
+        dataset_kwargs['mode'] = yaml_infer_config['inference-config']['subset-name']      
+               
+        patch_sampler_kwargs = keys2kwargs(yaml_data_config['val-patch-sampler'])    
+        patch_sampler_kwargs['patch_size'] = yaml_data_config['patch-size']    
+        
+        patch_aggregator_kwargs = keys2kwargs(yaml_data_config['val-patch-aggregator'])
+        patch_aggregator_kwargs['patch_size'] = yaml_data_config['patch-size']
+        
+        # Add into the global config
+        global_config['dataset-kwargs'] = dataset_kwargs
+        global_config['patch-sampler-kwargs'] = patch_sampler_kwargs
+        global_config['patch-aggregator-kwargs'] = patch_aggregator_kwargs
     
-    # Integrate NN kwargs into global config 
-    global_config['nn-kwargs': nn_config]
+
+    # Integrate NN kwargs into global config --
+    global_config['nn-kwargs'] = keys2kwargs(yaml_nn_config)
 
 
-    # Construct the Trainer's or Inferer's kwargs
+    # Construct the Trainer's or Inferer's kwargs  --
+    val_valid_patches_per_volume = get_num_valid_patches(yaml_data_config['patch-size'], 
+                                                     yaml_data_config['volume-size'], 
+													 focal_point_stride=yaml_data_config['val-patch-sampler']['focal-point-stride'],
+													 padding=yaml_data_config['val-patch-sampler']['padding'])
+
     input_data_config = {}
-    input_data_config['in-bimodal'] = data_config['patient-dataset']
+    input_data_config['is-bimodal'] = yaml_data_config['is-bimodal']
 
-    if data_config['is-bimodal']: 
-        input_data_config['input-representation'] = data_config['patient-dataset']['input-representation']
+    if yaml_data_config['is-bimodal']: 
+        input_data_config['input-representation'] = yaml_data_config['patient-dataset']['input-representation']
     else: 
-        input_data_config['input-modality'] = data_config['patient-dataset']['input-modality']
+        input_data_config['input-modality'] = yaml_data_config['patient-dataset']['input-modality']
 
     if training:
-        training_config = trainval_config['training-config']
-        training_config['dataset-name'] = data_config['dataset-name']
+        training_config = yaml_trainval_config['training-config']
+        training_config['dataset-name'] = yaml_data_config['dataset-name']
 
-        validation_config = trainval_config['validation-config']
-        validation_config['batch-of-patches-size'] = data_config['batch-of-patches-size']
-        validation_config['valid-patches-per-volume']: val_valid_patches_per_volume
+        validation_config = yaml_trainval_config['validation-config']
+        validation_config['batch-of-patches-size'] = yaml_data_config['batch-of-patches-size']
+        validation_config['valid-patches-per-volume'] = val_valid_patches_per_volume
 
-        logging_config = trainval_config['logging-config']
-        logging_config['patch-size'] = data_config['patch-size']
+        logging_config = yaml_trainval_config['logging-config']
+        logging_config['patch-size'] = yaml_data_config['patch-size']
 
-        # Integrate into the global config
+        # Add into the global config
         global_config['trainer-kwargs'] = {'input_data_config': input_data_config,
                                            'training_config': training_config, 
                                            'validation_config': validation_config,
                                            'logging_config': logging_config}
 
     else:
-        # TODO
-        pass
+        inference_config = yaml_infer_config['inference-config']
+        inference_config['dataset-name'] = yaml_data_config['dataset-name']
+        inference_config['patient-id-filepath'] = yaml_data_config['patient-id-filepath']
+        inference_config['batch-of-patches-size'] = yaml_data_config['batch-of-patches-size']
+        inference_config['valid-patches-per-volume'] = val_valid_patches_per_volume
+
+        # Add into the global config
+        global_config['inferer-kwargs'] = {'input_data_config': input_data_config,
+                                           'inference_config': inference_config}
 
 
     return global_config

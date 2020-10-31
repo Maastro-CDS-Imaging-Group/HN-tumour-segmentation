@@ -11,8 +11,8 @@ training-config:
   learning-rate: 0.0003
   enable-checkpointing: False
   checkpoint-step: 3
-  checkpoint-root-dir: ./model_checkpoint
-  continue-from-checkpoint: True
+  checkpoint-root-dir: ./model_checkpoints
+  continue-from-checkpoint: False
   checkpoint-filename: unet3d_pet_e030.pt
 
 

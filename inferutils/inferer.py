@@ -11,11 +11,6 @@ from inferutils.metrics import volumetric_dice
 
 logging.basicConfig(level=logging.DEBUG)
 
-"""
-TODO 
-- Incorporate input_data_config into inference step
-
-"""
 
 class Inferer():
 
@@ -42,7 +37,7 @@ class Inferer():
 
         with open(self.inference_config['patient-id-filepath'], 'r') as pf:
             self.patient_ids = [p_id for p_id in pf.read().split('\n') if p_id != '']
-        center = self.inference_config['subset-name']
+        center = self.inference_config['subset-name'].split('-')[1] 
         self.patient_ids = [p_id for p_id in self.patient_ids if center in p_id]
 
 
@@ -56,7 +51,7 @@ class Inferer():
         
             # Save the results -- pred volumes in nrrd, dice in csv 
             p_id = self.patient_ids[i]
-            if self.inference_config['save-nrrd']:
+            if self.inference_config['save-results']:
                 output_nrrd_filename = f"{p_id}_ct_gtvt.nrrd"
                 pred_labelmap_sitk = np2sitk(patient_pred_labelmap, has_whd_ordering=False)
                 sitk.WriteImage(pred_labelmap_sitk, f"{self.inference_config['output-save-dir']}/predicted/{output_nrrd_filename}")
@@ -67,7 +62,8 @@ class Inferer():
         dice_scores['average'] = avg_dice
         df = pd.DataFrame.from_dict(dice_scores, orient="index")
         logging.debug(df)
-        df.to_csv(f"{self.inference_config['output-save-dir']}/dice_scores.csv")
+        if self.inference_config['save-results']:
+            df.to_csv(f"{self.inference_config['output-save-dir']}/dice_scores.csv")
 
 
     def _inference_step(self, patient_dict):
@@ -85,13 +81,28 @@ class Inferer():
             # Take batch_of_patches_size number of patches at a time and push through the network
             for _ in range(0, self.inference_config['valid-patches-per-volume'], self.inference_config['batch-of-patches-size']):
                 
-                PET_patches = torch.stack([patches_list[i]['PET'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
+                # For bimodal input
+                if self.input_data_config['is-bimodal']:
+                    # For PET and CT as separate volumes
+                    if self.input_data_config['input-representation'] == 'separate-volumes':
+                        PET_patches = torch.stack([patches_list[i]['PET'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
+                        CT_patches = torch.stack([patches_list[i]['CT'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
+                        # Pack these tensors into a list
+                        input_patches = [PET_patches, CT_patches]
+                    # For PET and CT as a single 2-channel volume
+                    if self.input_data_config['input-representation'] == 'multichannel-volume':
+                        input_patches = torch.stack([patches_list[i]['PET-CT'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
+                # For unimodal input
+                else: 
+                    modality = self.input_data_config['input-modality']
+                    input_patches = torch.stack([patches_list[i][modality] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
                 
+                # Ground truth labelmap
                 if self.inference_config['compute-metrics']:
                     target_labelmap_patches = torch.stack([patches_list[i]['target-labelmap'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).long().to(self.device)
 
                 # Forward pass
-                pred_patches = self.model(PET_patches)
+                pred_patches = self.model(input_patches)
                 
                 # Convert the predicted batch of probabilities to a list of labelmap patches, and store
                 patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches)) 

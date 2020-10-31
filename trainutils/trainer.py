@@ -11,11 +11,6 @@ from inferutils.metrics import volumetric_dice
 
 logging.basicConfig(level=logging.DEBUG)
 
-"""
-TODO 
-- Incorporate input_data_config into training and validation steps
-
-"""
 
 
 class Trainer():
@@ -107,7 +102,7 @@ class Trainer():
 
                 # Accumulate loss value
                 epoch_train_loss += train_loss
-                break
+                
             epoch_train_loss /= len(self.train_patch_loader)
 
             # Clear CUDA cache
@@ -141,7 +136,7 @@ class Trainer():
             logging.debug("")
             logging.debug("")
 
-            if self.enable_wandb:
+            if self.logging_config['enable-wandb']:
                 wandb.log(
                           {
                            'train-loss': epoch_train_loss,
@@ -162,12 +157,29 @@ class Trainer():
 
     def _train_step(self, batch_of_patches):
 
-        PET_patches = batch_of_patches['PET'].to(self.device)
+        # For bimodal input
+        if self.input_data_config['is-bimodal']:
+            # For PET and CT as separate volumes
+            if self.input_data_config['input-representation'] == 'separate-volumes':
+                PET_patches = batch_of_patches['PET'].to(self.device)
+                CT_patches = batch_of_patches['CT'].to(self.device)
+                # Pack these tensors into a list
+                input_patches = [PET_patches, CT_patches]
+            # For PET and CT as a single 2-channel volume
+            if self.input_data_config['input-representation'] == 'multichannel-volume':
+                input_patches = batch_of_patches['PET-CT'].to(self.device)
+        
+        # For unimodal input
+        else: 
+            modality = self.input_data_config['input-modality']
+            input_patches = batch_of_patches[modality].to(self.device)
+
+        # Target labelmap
         target_labelmap_patches = batch_of_patches['target-labelmap'].long().to(self.device)
 
         # Forward pass
         self.optimizer.zero_grad()
-        pred_patches = self.model(PET_patches)
+        pred_patches = self.model(input_patches)
 
         # Compute loss
         train_loss = self.criterion(pred_patches, target_labelmap_patches)
