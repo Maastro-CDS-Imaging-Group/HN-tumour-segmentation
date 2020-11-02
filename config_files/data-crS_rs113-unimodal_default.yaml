@@ -51,7 +51,7 @@ patch-size:
   - 128
   - 32
 
-batch-of-patches-size: 2
+batch-of-patches-size: 4
 
 
 # --------------------------------------------------------

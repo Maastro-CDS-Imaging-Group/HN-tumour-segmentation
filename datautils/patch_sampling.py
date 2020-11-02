@@ -13,7 +13,7 @@ class PatchSampler3D():
     """
     Samples 3D patches of specified size using the specified sampling method.
     """
-    def __init__(self, patch_size, volume_size=[144,144,48], sampling='random', focal_point_stride=[1,1,1], padding=[0,0,0]):
+    def __init__(self, patch_size, volume_size, sampling, focal_point_stride, padding):
         self.patch_size = list(patch_size) # Specified in (W,H,D) order
         self.patch_size.reverse()    # Convert to (D,H,W) order
 

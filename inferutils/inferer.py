@@ -17,13 +17,17 @@ class Inferer():
     def __init__(self, 
                  model,                
                  volume_loader, patch_sampler, patch_aggregator,
-                 device,
+                 device, enable_distributed,
                  input_data_config,
                  inference_config):
         
         self.model = model
-        self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}"))
+        self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}", map_location=device))
+        if enable_distributed:
+            self.model = torch.nn.DataParallel(self.model)
         self.model.eval()
+        self.softmax = torch.nn.Softmax(dim=1) # Softmax along channel dimension
+        logging.debug(f"Loaded model: {inference_config['model-filepath']}")
 
         self.volume_loader = volume_loader
         self.patch_sampler = patch_sampler
@@ -79,30 +83,27 @@ class Inferer():
 
         with torch.no_grad(): # Disable autograd
             # Take batch_of_patches_size number of patches at a time and push through the network
-            for _ in range(0, self.inference_config['valid-patches-per-volume'], self.inference_config['batch-of-patches-size']):
-                
-                # For bimodal input
-                if self.input_data_config['is-bimodal']:
-                    # For PET and CT as separate volumes
-                    if self.input_data_config['input-representation'] == 'separate-volumes':
-                        PET_patches = torch.stack([patches_list[i]['PET'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
-                        CT_patches = torch.stack([patches_list[i]['CT'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
-                        # Pack these tensors into a list
-                        input_patches = [PET_patches, CT_patches]
-                    # For PET and CT as a single 2-channel volume
-                    if self.input_data_config['input-representation'] == 'multichannel-volume':
-                        input_patches = torch.stack([patches_list[i]['PET-CT'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
-                # For unimodal input
-                else: 
+            for p in range(0, self.inference_config['valid-patches-per-volume'], self.inference_config['batch-of-patches-size']):
+
+                # Get input patches
+                if self.input_data_config['is-bimodal']: # In case of bimodal input                    
+                    if self.input_data_config['input-representation'] == 'separate-volumes': # For PET and CT as separate volumes
+                        PET_patches = torch.stack([patches_list[p+i]['PET'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
+                        CT_patches = torch.stack([patches_list[p+i]['CT'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)                        
+                        input_patches = [PET_patches, CT_patches] # Pack these tensors into a list
+                    if self.input_data_config['input-representation'] == 'multichannel-volume': # For PET and CT as a single 2-channel volume
+                        input_patches = torch.stack([patches_list[p+i]['PET-CT'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)                
+                else: # In case of unimodal input 
                     modality = self.input_data_config['input-modality']
-                    input_patches = torch.stack([patches_list[i][modality] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
+                    input_patches = torch.stack([patches_list[p+i][modality] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
                 
-                # Ground truth labelmap
+                # Get ground truth labelmap
                 if self.inference_config['compute-metrics']:
-                    target_labelmap_patches = torch.stack([patches_list[i]['target-labelmap'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).long().to(self.device)
+                    target_labelmap_patches = torch.stack([patches_list[p+i]['target-labelmap'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).long().to(self.device)
 
                 # Forward pass
                 pred_patches = self.model(input_patches)
+                pred_patches = self.softmax(pred_patches)
                 
                 # Convert the predicted batch of probabilities to a list of labelmap patches, and store
                 patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches)) 

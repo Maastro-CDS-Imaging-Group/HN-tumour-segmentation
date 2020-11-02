@@ -67,7 +67,9 @@ def build_config(cli_args, training=True):
 
         train_patch_queue_kwargs = keys2kwargs(yaml_data_config['train-patch-queue'])
 
-        train_patch_loader_kwargs = {'batch_size': yaml_data_config['batch-of-patches-size']}
+        train_patch_loader_kwargs = {'batch_size': yaml_data_config['batch-of-patches-size'], 
+                                     'shuffle': False, 
+                                     'num_workers': 0}
     
         val_dataset_kwargs = keys2kwargs(yaml_data_config['patient-dataset'])
         val_dataset_kwargs['data_dir'] = data_dir
@@ -76,9 +78,11 @@ def build_config(cli_args, training=True):
                
         val_patch_sampler_kwargs = keys2kwargs(yaml_data_config['val-patch-sampler'])    
         val_patch_sampler_kwargs['patch_size'] = yaml_data_config['patch-size']    
+        val_patch_sampler_kwargs['volume_size'] = yaml_data_config['volume-size'] 
         
         val_patch_aggregator_kwargs = keys2kwargs(yaml_data_config['val-patch-aggregator'])
         val_patch_aggregator_kwargs['patch_size'] = yaml_data_config['patch-size']
+        val_patch_aggregator_kwargs['volume_size'] = yaml_data_config['volume-size']
 
         # Add into the global config
         global_config['train-dataset-kwargs'] = train_dataset_kwargs
@@ -90,17 +94,20 @@ def build_config(cli_args, training=True):
         global_config['val-patch-aggregator-kwargs'] = val_patch_aggregator_kwargs
 
 
-    else:
+    else: # For inference
         dataset_kwargs = keys2kwargs(yaml_data_config['patient-dataset'])
         dataset_kwargs['data_dir'] = data_dir
         dataset_kwargs['patient_id_filepath'] = yaml_data_config['patient-id-filepath']  
         dataset_kwargs['mode'] = yaml_infer_config['inference-config']['subset-name']      
                
         patch_sampler_kwargs = keys2kwargs(yaml_data_config['val-patch-sampler'])    
-        patch_sampler_kwargs['patch_size'] = yaml_data_config['patch-size']    
+        patch_sampler_kwargs['patch_size'] = yaml_data_config['patch-size']
+        patch_sampler_kwargs['volume_size'] = yaml_data_config['volume-size']  
+
         
         patch_aggregator_kwargs = keys2kwargs(yaml_data_config['val-patch-aggregator'])
         patch_aggregator_kwargs['patch_size'] = yaml_data_config['patch-size']
+        patch_aggregator_kwargs['volume_size'] = yaml_data_config['volume-size'] 
         
         # Add into the global config
         global_config['dataset-kwargs'] = dataset_kwargs

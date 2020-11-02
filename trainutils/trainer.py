@@ -18,16 +18,20 @@ class Trainer():
     def __init__(self, 
                 model,
                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
-                device,
+                device, enable_distributed,
                 input_data_config, training_config, validation_config, logging_config):
         
         self.model = model
+        if enable_distributed:
+            self.model = torch.nn.DataParallel(self.model)
+
         self.train_patch_loader = train_patch_loader
         self.val_volume_loader = val_volume_loader
         self.val_sampler = val_sampler
         self.val_aggregator = val_aggregator
 
         self.device = device 
+        self.softmax = torch.nn.Softmax(dim=1) # Softmax along channel dimension. Used during validation. 
 
         # Config
         self.input_data_config = input_data_config
@@ -36,6 +40,9 @@ class Trainer():
         self.logging_config = logging_config
 
         self.criterion = build_loss_function(training_config['loss-name'], self.device)
+        if enable_distributed:
+            self.criterion = torch.nn.DataParallel(self.criterion)
+
         self.optimizer = torch.optim.Adam(self.model.parameters(), 
                                           lr=self.training_config['learning-rate'])
         
@@ -215,19 +222,34 @@ class Trainer():
 
         with torch.no_grad(): # Disable autograd
             # Take batch_of_patches_size number of patches at a time and push through the network
-            for _ in range(0, self.validation_config['valid-patches-per-volume'], self.validation_config['batch-of-patches-size']):
-                PET_patches = torch.stack([patches_list[i]['PET'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)
-                target_labelmap_patches = torch.stack([patches_list[i]['target-labelmap'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).long().to(self.device)
+            for p in range(0, self.validation_config['valid-patches-per-volume'], self.validation_config['batch-of-patches-size']):
+                
+                # Get input patches
+                if self.input_data_config['is-bimodal']: # In case of bimodal input                   
+                    if self.input_data_config['input-representation'] == 'separate-volumes':  # For PET and CT as separate volumes
+                        PET_patches = torch.stack([patches_list[p+i]['PET'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)
+                        CT_patches = torch.stack([patches_list[p+i]['CT'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)
+                        # Pack these tensors into a list
+                        input_patches = [PET_patches, CT_patches]                    
+                    if self.input_data_config['input-representation'] == 'multichannel-volume': # For PET and CT as a single 2-channel volume
+                        input_patches = torch.stack([patches_list[p+i]['PET-CT'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)                
+                else: # In case of unimodal input
+                    modality = self.input_data_config['input-modality']
+                    input_patches = torch.stack([patches_list[p+i][modality] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)
+                
+                # Get ground truth labelmap
+                target_labelmap_patches = torch.stack([patches_list[p+i]['target-labelmap'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).long().to(self.device)
 
                 # Forward pass
-                pred_patches = self.model(PET_patches)
-                
-                # Convert the predicted batch of probabilities to a list of labelmap patches, and store
-                patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches)) 
+                pred_patches = self.model(input_patches)                
 
                 # Compute validation loss
                 val_loss = self.criterion(pred_patches, target_labelmap_patches)
                 patient_val_loss += val_loss.item()
+
+                # Convert the predicted batch of probabilities to a list of labelmap patches, and store
+                pred_patches = self.softmax(pred_patches)
+                patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches)) 
                 
             # Calculate avergae validation loss for this patient
             patient_val_loss /= (self.validation_config['valid-patches-per-volume'] / self.validation_config['batch-of-patches-size'])

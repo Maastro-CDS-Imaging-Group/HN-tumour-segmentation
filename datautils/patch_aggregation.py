@@ -28,6 +28,9 @@ class PatchAggregator3D():
 
         self.valid_focal_points = self._get_valid_focal_points() # Valid focal points in volume coordinates
 
+        # print("N focal points", len(self.valid_focal_points))
+        # print("focal pts:", self.valid_focal_points)
+        # print("self.volume_size:",self.volume_size)
 
     def _get_valid_focal_points(self):
         patch_size = np.array(self.patch_size)

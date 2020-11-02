@@ -1,9 +1,7 @@
 
-x Implement config fetching code
-x Debug and test the config system with training and inference
+- Implement option to save model output as probabilities in inference
 
-
-x Make Trainer and Inferer take into account the input_modality / input_representation while fetching input patches
+- Integrate enable_distributed option of the Trainer and Infer into the config system
 
 - Implement validation metrics:
     x Dice and Jaccard for now. 

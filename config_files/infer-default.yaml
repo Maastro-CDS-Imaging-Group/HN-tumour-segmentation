@@ -6,7 +6,8 @@ device: cuda
 # Inference config
 inference-config:
   subset-name: crossval-CHUM-validation
-  model-filepath: ./saved_models/unet3d_pet_e030.pt
+  model-filepath: ./saved_models/unet3d_pet_e030_hist.pt
   compute-metrics: True
   save-results: False
+  save-as-probabilities: False # TODO
   output-save-dir: /home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113

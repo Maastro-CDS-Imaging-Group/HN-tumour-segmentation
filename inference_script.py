@@ -57,7 +57,7 @@ def main(global_config):
     volume_loader = DataLoader(dataset, batch_size=1, shuffle=False)
     patch_sampler = PatchSampler3D(**global_config['patch-sampler-kwargs'])
     patch_aggregator = PatchAggregator3D(**global_config['patch-aggregator-kwargs'])
-
+      
 
     # -----------------------------------------------
     # Network
@@ -65,10 +65,11 @@ def main(global_config):
 
     if global_config['nn-name'] == "unet3d":
         unet3d = nnmodules.UNet3D(**global_config['nn-kwargs']).to(global_config['device'])
+        #unet3d = torch.nn.DataParallel(unet3d)
 
     elif global_config['nn-name'] == "msam3d":
-		# TODO
-		pass
+        # TODO
+        pass
 
 
     # -----------------------------------------------
@@ -78,6 +79,7 @@ def main(global_config):
     inferer = Inferer(unet3d,
                     volume_loader, patch_sampler, patch_aggregator,
                     global_config['device'],
+                    enable_distributed=True,
                     **global_config['inferer-kwargs'])
 
     inferer.run_inference()

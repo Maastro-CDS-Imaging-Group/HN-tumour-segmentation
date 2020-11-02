@@ -80,6 +80,7 @@ def main(global_config):
 		# TODO
 		pass
 
+
 	# -----------------------------------------------
 	# Training
 	# -----------------------------------------------
@@ -87,6 +88,7 @@ def main(global_config):
 	trainer = Trainer(unet3d,
 					train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
 					global_config['device'],
+					enable_distributed=True,
 					**global_config['trainer-kwargs'])
 
 	trainer.run_training()
