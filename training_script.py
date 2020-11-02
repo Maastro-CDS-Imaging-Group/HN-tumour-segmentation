@@ -16,7 +16,7 @@ import config_utils
 # Constants
 DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"
 DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
-DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-default.yaml"
+DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-trial_run.yaml"
 
 
 def get_cli_args():
@@ -84,7 +84,7 @@ def main(global_config):
 	# Training
 	# -----------------------------------------------
 
-	trainer = Trainer(unet3d, global_config['nn-name'],
+	trainer = Trainer(unet3d,
 					train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
 					global_config['device'],
 					**global_config['trainer-kwargs'])

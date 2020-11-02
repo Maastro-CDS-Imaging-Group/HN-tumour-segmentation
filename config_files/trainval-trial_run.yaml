@@ -23,7 +23,7 @@ validation-config:
 
 # WandB logging config
 logging-config:
-  run-name: training-script-test-run
+  run-name: trial-run
   enable-wandb: False
   wandb-entity: cnmy-ro
   wandb-project: hn-gtv-segmentation

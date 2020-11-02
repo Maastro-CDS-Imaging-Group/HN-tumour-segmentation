@@ -15,14 +15,13 @@ logging.basicConfig(level=logging.DEBUG)
 class Inferer():
 
     def __init__(self, 
-                 model, nn_name,                
+                 model,                
                  volume_loader, patch_sampler, patch_aggregator,
                  device,
                  input_data_config,
                  inference_config):
         
         self.model = model
-        self.nn_name = nn_name # TODO: Incorporate this somewhere ?
         self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}"))
         self.model.eval()
 

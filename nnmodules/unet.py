@@ -134,6 +134,8 @@ class UNet2D(UNet):
         kwargs.update(user_kwargs)
         super().__init__(*args, **kwargs)
 
+        self.nn_name = "unet2d"
+
 
 class UNet3D(UNet):
     def __init__(self, *args, **user_kwargs):
@@ -144,3 +146,5 @@ class UNet3D(UNet):
         kwargs['normalization'] = 'batch'
         kwargs.update(user_kwargs)
         super().__init__(*args, **kwargs)
+
+        self.nn_name = "unet3d"

@@ -16,13 +16,12 @@ logging.basicConfig(level=logging.DEBUG)
 class Trainer():
 
     def __init__(self, 
-                model, nn_name,
+                model,
                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
                 device,
                 input_data_config, training_config, validation_config, logging_config):
         
         self.model = model
-        self.nn_name = nn_name
         self.train_patch_loader = train_patch_loader
         self.val_volume_loader = val_volume_loader
         self.val_sampler = val_sampler
@@ -44,7 +43,7 @@ class Trainer():
 
         self.checkpoint_dir = f"{self.training_config['checkpoint-root-dir']}/{self.logging_config['run-name']}"
         # if not os.path.isdir(self.checkpoint_dir):
-        os.mkdirs(self.checkpoint_dir, exists_ok=True)
+        os.makedirs(self.checkpoint_dir, exist_ok=True)
 
         if training_config['continue-from-checkpoint']:
             # Checkpoint name example - unet3d_pet_e005.pt
@@ -103,7 +102,7 @@ class Trainer():
 
                 # Accumulate loss value
                 epoch_train_loss += train_loss
-                break
+                
             epoch_train_loss /= len(self.train_patch_loader)
 
             # Clear CUDA cache
@@ -157,7 +156,7 @@ class Trainer():
                         modality_str = self.input_data_config['input-modality'].lower()
 
                     # Example checkpoint name: unet3d_pet_e005.pt 
-                    checkpoint_filename = f"{self.nn_name}_{modality_str}_e{str(epoch).zfill(3)}.pt"
+                    checkpoint_filename = f"{self.model.nn_name}_{modality_str}_e{str(epoch).zfill(3)}.pt"
                     logging.debug(f"Saving checkpoint: {checkpoint_filename}")
                     torch.save(self.model.state_dict(), f"{self.checkpoint_dir}/{checkpoint_filename}")
 

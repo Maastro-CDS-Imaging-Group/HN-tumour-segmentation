@@ -75,7 +75,7 @@ def main(global_config):
     # Inference
     # -----------------------------------------------
 
-    inferer = Inferer(unet3d, global_config['nn-name'],
+    inferer = Inferer(unet3d,
                     volume_loader, patch_sampler, patch_aggregator,
                     global_config['device'],
                     **global_config['inferer-kwargs'])
