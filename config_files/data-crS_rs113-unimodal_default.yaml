@@ -65,6 +65,10 @@ train-patch-sampler:
     - 4
     - 4
   sampling: strided-random
+  padding:
+    - 0
+    - 0
+    - 0
 
 # Patch queue
 train-patch-queue:
@@ -78,6 +82,9 @@ train-patch-queue:
 # --------------------------------------------------------
 # Validation/inference pipeline settings
 # --------------------------------------------------------
+# Focal point stride and padding combinations to result in 8 patches:
+#  (10,10,10) and (0,0,0)
+#  (60,60,20) and (44,44,4)
 
 # Patch sampler
 val-patch-sampler:
@@ -102,3 +109,4 @@ val-patch-aggregator:
     - 44
     - 44
     - 4
+

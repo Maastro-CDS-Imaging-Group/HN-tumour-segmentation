@@ -16,7 +16,7 @@ import config_utils
 # Constants
 DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"
 DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
-DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-trial_run.yaml"
+DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-default.yaml"
 
 
 def get_cli_args():
@@ -74,7 +74,7 @@ def main(global_config):
 	# -----------------------------------------------
 
 	if global_config['nn-name'] == "unet3d":
-		unet3d = nnmodules.UNet3D(**global_config['nn-kwargs']).to(global_config['device'])
+		unet3d = nnmodules.UNet3D(**global_config['nn-kwargs'])
 
 	elif global_config['nn-name'] == "msam3d":
 		# TODO
@@ -86,10 +86,8 @@ def main(global_config):
 	# -----------------------------------------------
 
 	trainer = Trainer(unet3d,
-					train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
-					global_config['device'],
-					enable_distributed=True,
-					**global_config['trainer-kwargs'])
+					 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
+					 **global_config['trainer-kwargs'])
 
 	trainer.run_training()
 

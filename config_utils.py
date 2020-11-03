@@ -44,11 +44,6 @@ def build_config(cli_args, training=True):
     # Get individual settings --    
     global_config['nn-name'] = yaml_nn_config['nn-name']
 
-    if training:
-        global_config['device'] = yaml_trainval_config['device']
-    else:
-        global_config['device'] = yaml_infer_config['device']
-
 
     # Construct kwargs dicts for the data pipeline --
     preprocessor_kwargs = keys2kwargs(yaml_data_config['preprocessor'])
@@ -64,6 +59,7 @@ def build_config(cli_args, training=True):
         
         train_patch_sampler_kwargs = keys2kwargs(yaml_data_config['train-patch-sampler'])      
         train_patch_sampler_kwargs['patch_size'] = yaml_data_config['patch-size']
+        train_patch_sampler_kwargs['volume_size'] = yaml_data_config['volume-size'] 
 
         train_patch_queue_kwargs = keys2kwargs(yaml_data_config['train-patch-queue'])
 
@@ -134,6 +130,8 @@ def build_config(cli_args, training=True):
         input_data_config['input-modality'] = yaml_data_config['patient-dataset']['input-modality']
 
     if training:
+        hardware_config = yaml_trainval_config['hardware-config']
+
         training_config = yaml_trainval_config['training-config']
         training_config['dataset-name'] = yaml_data_config['dataset-name']
 
@@ -146,12 +144,14 @@ def build_config(cli_args, training=True):
         logging_config['wandb-config']['patch-size'] = yaml_data_config['patch-size']
 
         # Add into the global config
-        global_config['trainer-kwargs'] = {'input_data_config': input_data_config,
+        global_config['trainer-kwargs'] = {'hardware_config': hardware_config,
+                                           'input_data_config': input_data_config,
                                            'training_config': training_config, 
                                            'validation_config': validation_config,
                                            'logging_config': logging_config}
 
     else:
+        hardware_config = yaml_infer_config['hardware-config']
         inference_config = yaml_infer_config['inference-config']
         inference_config['dataset-name'] = yaml_data_config['dataset-name']
         inference_config['patient-id-filepath'] = yaml_data_config['patient-id-filepath']
@@ -159,7 +159,8 @@ def build_config(cli_args, training=True):
         inference_config['valid-patches-per-volume'] = val_valid_patches_per_volume
 
         # Add into the global config
-        global_config['inferer-kwargs'] = {'input_data_config': input_data_config,
+        global_config['inferer-kwargs'] = {'hardware_config': hardware_config,
+                                           'input_data_config': input_data_config,
                                            'inference_config': inference_config}
 
 

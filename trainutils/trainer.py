@@ -18,19 +18,21 @@ class Trainer():
     def __init__(self, 
                 model,
                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
-                device, enable_distributed,
-                input_data_config, training_config, validation_config, logging_config):
+                hardware_config, input_data_config, training_config, validation_config, logging_config):
         
-        self.model = model
-        if enable_distributed:
+        self.hardware_config = hardware_config
+        self.device = self.hardware_config['device']
+
+        self.model = model.to(self.device)
+        if self.hardware_config['enable-distributed']:
             self.model = torch.nn.DataParallel(self.model)
+            # print(self.model.module.nn_name)
 
         self.train_patch_loader = train_patch_loader
         self.val_volume_loader = val_volume_loader
         self.val_sampler = val_sampler
         self.val_aggregator = val_aggregator
-
-        self.device = device 
+         
         self.softmax = torch.nn.Softmax(dim=1) # Softmax along channel dimension. Used during validation. 
 
         # Config
@@ -40,23 +42,37 @@ class Trainer():
         self.logging_config = logging_config
 
         self.criterion = build_loss_function(training_config['loss-name'], self.device)
-        if enable_distributed:
-            self.criterion = torch.nn.DataParallel(self.criterion)
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), 
                                           lr=self.training_config['learning-rate'])
         
+        # Default starting epoch, when starting training from scratch
         self.start_epoch = 1
 
         self.checkpoint_dir = f"{self.training_config['checkpoint-root-dir']}/{self.logging_config['run-name']}"
         # if not os.path.isdir(self.checkpoint_dir):
         os.makedirs(self.checkpoint_dir, exist_ok=True)
 
+        # Settings, if training to be continued from a checkpoint
         if training_config['continue-from-checkpoint']:
             # Checkpoint name example - unet3d_pet_e005.pt
             self.model.load_state_dict(torch.load(f"{self.checkpoint_dir}/{training_config['load-checkpoint-filename']}"))
             self.start_epoch = int(training_config['load-checkpoint-filename'].split('.')[0][-3:]) + 1
 
+        # Cyclic LR scheduler 
+        batches_per_epoch = len(self.train_patch_loader)
+        if self.start_epoch == 1:
+            last_iteration = -1
+        else:
+            last_iteration = (self.start_epoch-1) * batches_per_epoch
+
+        if self.training_config['use-lr-scheduler']:
+            self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer, 
+                                                                base_lr=0.0001, max_lr=0.002,
+                                                                step_size_up=5 * batches_per_epoch,
+                                                                mode='triangular2',
+                                                                cycle_momentum=False,
+                                                                last_epoch=last_iteration)
 
         # Logging related
         if self.logging_config['enable-wandb']:
@@ -163,7 +179,9 @@ class Trainer():
                         modality_str = self.input_data_config['input-modality'].lower()
 
                     # Example checkpoint name: unet3d_pet_e005.pt 
-                    checkpoint_filename = f"{self.model.nn_name}_{modality_str}_e{str(epoch).zfill(3)}.pt"
+                    if self.hardware_config['enable-distributed']:    nn_name = self.model.module.nn_name
+                    else:    nn_name = self.model.nn_name
+                    checkpoint_filename = f"{nn_name}_{modality_str}_e{str(epoch).zfill(3)}.pt"
                     logging.debug(f"Saving checkpoint: {checkpoint_filename}")
                     torch.save(self.model.state_dict(), f"{self.checkpoint_dir}/{checkpoint_filename}")
 
@@ -192,7 +210,7 @@ class Trainer():
 
         # Forward pass
         self.optimizer.zero_grad()
-        pred_patches = self.model(input_patches)
+        pred_patches = self.model(input_patches)  # Get model predictions. These are NOT probabilities, but scores (aka logits).
 
         # Compute loss
         train_loss = self.criterion(pred_patches, target_labelmap_patches)
@@ -200,6 +218,10 @@ class Trainer():
         # Generate loss gradients and back-propagate
         train_loss.backward()
         self.optimizer.step()
+
+        # Step the scheduler to update learning rate
+        if self.training_config['use-lr-scheduler']:
+            self.scheduler.step()
 
         return train_loss.item()
 

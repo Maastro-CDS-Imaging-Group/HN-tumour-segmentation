@@ -1,19 +1,22 @@
 
 # Hardware
-device: cuda
+hardware-config:
+  device: cuda  # Default device
+  enable-distributed: False
 
 
 # Training config
 training-config:
   train-subset-name: crossval-CHUM-training
-  loss-name: wce
-  num-epochs: 15
+  loss-name: wce+dice
+  num-epochs: 21
   learning-rate: 0.0003
+  use-lr-scheduler: False
   enable-checkpointing: True
-  checkpoint-step: 5
+  checkpoint-step: 3
   checkpoint-root-dir: ./model_checkpoints
-  continue-from-checkpoint: True
-  load-checkpoint-filename: unet3d_pet_e030.pt
+  continue-from-checkpoint: False
+  load-checkpoint-filename: None
 
 
 # Validation config

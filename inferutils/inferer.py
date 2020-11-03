@@ -17,13 +17,11 @@ class Inferer():
     def __init__(self, 
                  model,                
                  volume_loader, patch_sampler, patch_aggregator,
-                 device, enable_distributed,
-                 input_data_config,
-                 inference_config):
+                 hardware_config, input_data_config, inference_config):
         
         self.model = model
         self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}", map_location=device))
-        if enable_distributed:
+        if hardware_config['enable-distributed']:
             self.model = torch.nn.DataParallel(self.model)
         self.model.eval()
         self.softmax = torch.nn.Softmax(dim=1) # Softmax along channel dimension
@@ -33,9 +31,10 @@ class Inferer():
         self.patch_sampler = patch_sampler
         self.patch_aggregator = patch_aggregator
 
-        self.device = device
+        self.device = hardware_config['device']
  
         # Configs
+        self.hardware_config = hardware_config
         self.input_data_config = input_data_config
         self.inference_config = inference_config
 

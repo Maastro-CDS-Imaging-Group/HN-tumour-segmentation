@@ -1,0 +1,54 @@
+(OK) Loading cuda 10.2.89
+
+
+Wed Nov  4 00:35:58 2020       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 450.51.06    Driver Version: 450.51.06    CUDA Version: 11.0     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  Tesla P100-SXM2...  Off  | 00000000:06:00.0 Off |                    0 |
+| N/A   38C    P0    43W / 300W |      0MiB / 16280MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+|   1  Tesla P100-SXM2...  Off  | 00000000:84:00.0 Off |                    0 |
+| N/A   36C    P0    37W / 300W |      0MiB / 16280MiB |      2%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+
+
+If you use TorchIO for your research, please cite the following paper:
+Pérez-García et al., TorchIO: a Python library for efficient loading,
+preprocessing, augmentation and patch-based sampling of medical images
+in deep learning. Credits instructions: https://torchio.readthedocs.io/#credits
+
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): api.wandb.ai:443
+DEBUG:urllib3.connectionpool:https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 200 None
+DEBUG:git.cmd:Popen(['git', 'rev-parse', '--show-toplevel'], cwd=/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation, universal_newlines=False, shell=None, istream=None)
+INFO:wandb:setting login settings: {}
+wandb: Currently logged in as: cnmy-ro (use `wandb login --relogin` to force relogin)
+wandb: wandb version 0.10.8 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.10.7
+wandb: Syncing run composite-loss-test-run
+wandb: ⭐️ View project at https://wandb.ai/cnmy-ro/hn-gtv-segmentation
+wandb: 🚀 View run at https://wandb.ai/cnmy-ro/hn-gtv-segmentation/runs/pht5qe04
+wandb: Run data is saved locally in wandb/run-20201104_003620-pht5qe04
+wandb: Run `wandb off` to turn off syncing.
+DEBUG:root:Trainer initialized
+DEBUG:root:Train subset name: crossval-CHUM-training
+DEBUG:root:Validation subset name: crossval-CHUM-validation
+DEBUG:root:Run name: composite-loss-test-run
+DEBUG:root:Epoch 1
+DEBUG:root:Training ...
+  0%|          | 0/1160 [00:00<?, ?it/s]  0%|          | 1/1160 [00:02<51:21,  2.66s/it]  0%|          | 2/1160 [00:05<50:39,  2.63s/it]  0%|          | 3/1160 [00:07<50:15,  2.61s/it]  0%|          | 4/1160 [00:10<49:51,  2.59s/it]  0%|          | 5/1160 [00:12<49:37,  2.58s/it]  1%|          | 6/1160 [00:15<49:22,  2.57s/it]  1%|          | 7/1160 [00:17<49:16,  2.56s/it]  1%|          | 8/1160 [00:20<49:07,  2.56s/it]  1%|          | 9/1160 [00:23<49:04,  2.56s/it]  1%|          | 10/1160 [00:25<48:58,  2.56s/it]  1%|          | 11/1160 [00:28<48:57,  2.56s/it]  1%|          | 12/1160 [00:30<48:53,  2.56s/it]  1%|          | 13/1160 [00:33<48:49,  2.55s/it]

@@ -1,13 +1,15 @@
 
 # Hardware
-device: cuda
-
+hardware-config:
+  device: cuda
+  enable-distributed: False
+  
 
 # Inference config
 inference-config:
   subset-name: crossval-CHUM-validation
   model-filepath: ./saved_models/unet3d_pet_e030_hist.pt
   compute-metrics: True
-  save-results: False
+  save-results: True
   save-as-probabilities: False # TODO
   output-save-dir: /home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113

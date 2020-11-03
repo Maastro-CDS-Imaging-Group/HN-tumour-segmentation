@@ -1,15 +1,36 @@
 import numpy as np
-import SimpleITK as sitk
+import torch
+from trainutils.loss_functions import *
+from inferutils.metrics import volumetric_dice
 
-data_dir = "/home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train/crFHN_rs113_hecktor_nii"
-patient_id_filepath = "./hecktor_meta/patient_IDs_train.txt"
+# pred = np.array([
+#                  [[0.0, 1.0],
+#                   [0.0, 1.0]],
+                
+#                  [[1.0, 0.0],
+#                   [1.0, 0.0]]
+#                 ])
 
+pred = np.array([
+                 [[0.0, 1.0],
+                  [1.0, 0.0]],
+                
+                 [[1.0, 0.0],
+                  [0.0, 1.0]]
+                ])                
 
-with open(patient_id_filepath, 'r') as pf:
-    patient_ids = [p_id for p_id in pf.read().split('\n') if p_id != '']
+pred = torch.tensor(pred, requires_grad=True)
+print(pred.is_leaf) 
 
-for p_id in patient_ids:
-    gtv_file = f"{data_dir}/{p_id}_ct_gtvt.nii.gz"
-    gtv_sitk = sitk.ReadImage(gtv_file)
-    gtv_np = sitk.GetArrayFromImage(gtv_sitk)
-    print(p_id, np.unique(gtv_np))
+target_labelmap = torch.tensor(([[0, 1],
+                                 [0, 1]]))
+
+print(pred.shape, target_labelmap.shape)
+
+criterion = build_loss_function('dice', device='cpu')
+dice_loss = criterion(pred.unsqueeze(dim=0), target_labelmap.unsqueeze(dim=0))
+dice_loss.backward()
+print(dice_loss)
+
+print(volumetric_dice(pred.detach().argmax(dim=1).numpy(), target_labelmap.numpy()))
+print(pred.argmax(dim=1))

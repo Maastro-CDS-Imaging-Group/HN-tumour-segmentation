@@ -3,8 +3,8 @@
 
 # Job configuration ---
 
-#SBATCH --job-name=test2
-#SBATCH --output=slurm_job_logs/test2.%j.log
+#SBATCH --job-name=composite-loss-test
+#SBATCH --output=slurm_job_logs/composite-loss-test.%j.log
 
 ## OpenMP settings
 #SBATCH --cpus-per-task=4
@@ -13,7 +13,7 @@
 ## Request for a node with 2 Tesla P100 GPUs
 #SBATCH --gres=gpu:pascal:2
 
-#SBATCH --time=15:00:00
+#SBATCH --time=20:00:00
 
 ## TO use the UM DKE project account
 # #SBATCH --account=um_dke
@@ -35,7 +35,7 @@ data_config_file="./config_files/data-crS_rs113-unimodal_default.yaml"
 nn_config_file="./config_files/nn-unet3d_default.yaml"
 trainval_config_file="./config_files/trainval-default.yaml"
 
-run_name="histogram-mapping-test-run"
+run_name="composite-loss-test-run"
 
 $python_interpreter $python_file --data_config_file $data_config_file \
                                  --nn_config_file $nn_config_file \
