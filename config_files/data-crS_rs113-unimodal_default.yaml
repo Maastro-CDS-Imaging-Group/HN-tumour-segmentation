@@ -1,0 +1,112 @@
+# --------------------------------------------------------
+# Constants
+# --------------------------------------------------------
+dataset-name: hecktor-crS_rs113
+data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train
+
+patient-id-filepath: ./hecktor_meta/patient_IDs_train.txt
+
+volume-size: 
+  - 144
+  - 144
+  - 48
+
+is-bimodal: False
+
+# --------------------------------------------------------
+# Patient dataset
+# --------------------------------------------------------
+patient-dataset:
+  input-modality: PET
+  augment-data: False
+
+# The train/val/inference subset name is specified in trainval and infer config files
+
+# --------------------------------------------------------
+# Preprocessor
+# --------------------------------------------------------
+preprocessor:
+  smooth-sigma-mm: 
+    PET: 2.0
+    CT: None
+  normalization-method:
+    PET: histogram-mapping
+    CT: clip-and-rescale
+  clipping-range:
+    PET:
+      - 0
+      - 20
+    CT:
+      - -150
+      - 150
+  histogram_landmarks_path:
+    PET: "./hecktor_meta/default_small_crop/crS_rs113_train-hist_landmarks_PET.txt"
+    CT: None
+
+# --------------------------------------------------------
+# Patch settings
+# --------------------------------------------------------
+patch-size: 
+  - 128
+  - 128
+  - 32
+
+batch-of-patches-size: 4
+
+
+# --------------------------------------------------------
+# Training pipeline settings
+# --------------------------------------------------------
+
+# Patch sampler
+train-patch-sampler:
+  focal-point-stride:
+    - 4
+    - 4
+    - 4
+  sampling: strided-random
+  padding:
+    - 0
+    - 0
+    - 0
+
+# Patch queue
+train-patch-queue:
+  max-length: 128
+  samples-per-volume: 32
+  num-workers: 4
+  shuffle-subjects: True
+  shuffle-patches: True
+
+
+# --------------------------------------------------------
+# Validation/inference pipeline settings
+# --------------------------------------------------------
+# Focal point stride and padding combinations to result in 8 patches:
+#  (10,10,10) and (0,0,0)
+#  (60,60,20) and (44,44,4)
+
+# Patch sampler
+val-patch-sampler:
+  focal-point-stride:
+    - 60
+    - 60
+    - 20
+  sampling: sequential
+  padding:
+    - 44
+    - 44
+    - 4
+
+# Patch aggregator 
+val-patch-aggregator:
+  focal-point-stride:
+    - 60
+    - 60
+    - 20
+  overlap-handling: union
+  unpadding:
+    - 44
+    - 44
+    - 4
+

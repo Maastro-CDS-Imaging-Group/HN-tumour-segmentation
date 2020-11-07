@@ -1,0 +1,30 @@
+
+# Hardware
+device: cuda
+
+
+# Training config
+training-config:
+  train-subset-name: crossval-CHUM-training
+  loss-name: wce
+  num-epochs: 12
+  learning-rate: 0.0003
+  enable-checkpointing: False
+  checkpoint-step: 3
+  checkpoint-root-dir: ./model_checkpoints
+  continue-from-checkpoint: False
+  load-checkpoint-filename: unet3d_pet_e030.pt
+
+
+# Validation config
+validation-config:
+  val-subset-name: crossval-CHUM-validation
+
+
+# WandB logging config
+logging-config:
+  run-name: trial-run
+  enable-wandb: False
+  wandb-entity: cnmy-ro
+  wandb-project: hn-gtv-segmentation
+  

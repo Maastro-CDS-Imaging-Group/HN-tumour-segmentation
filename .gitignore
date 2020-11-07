@@ -1,0 +1,10 @@
+# Checkpoints and saved models
+**/*.pt
+
+
+# WandB stuff
+wandb
+
+
+# Pycache
+**/__pycache__

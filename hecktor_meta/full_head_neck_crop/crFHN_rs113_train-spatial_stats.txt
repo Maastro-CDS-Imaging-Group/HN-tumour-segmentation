@@ -1,0 +1,11 @@
+Dataset: crFHN_rs113_train
+
+CT x-y spacing counts: {1.0: 201}
+CT z spacing counts: {3.0: 201}
+CT x-y size counts: {450: 201}
+CT n-slices counts: {100: 201}
+
+PET x-y spacing counts: {1.0: 201}
+PET z spacing counts: {3.0: 201}
+PET x-y size counts: {450: 201}
+PET n-slices counts: {100: 201}
