@@ -1,5 +1,5 @@
-# Model checkpoints
-model_checkpoints
+# Checkpoints and saved models
+**/*.pt
 
 
 # WandB stuff
