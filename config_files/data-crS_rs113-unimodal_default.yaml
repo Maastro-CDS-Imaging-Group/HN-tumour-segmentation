@@ -18,7 +18,7 @@ is-bimodal: False
 # --------------------------------------------------------
 patient-dataset:
   input-modality: PET
-  augment-data: False
+  augment-data: True
 
 # The train/val/inference subset name is specified in trainval and infer config files
 
@@ -40,7 +40,7 @@ preprocessor:
       - -150
       - 150
   histogram_landmarks_path:
-    PET: "./hecktor_meta/default_small_crop/crS_rs113_train-hist_landmarks_PET.txt"
+    PET: "./hecktor_meta/default_small_crop/crossval_CHGJ-histogram_landmarks_PET.txt"
     CT: None
 
 # --------------------------------------------------------
