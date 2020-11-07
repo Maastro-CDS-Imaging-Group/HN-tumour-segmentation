@@ -1,10 +1,9 @@
-- Implement and test cyclic LR scheduling
+x Implement and test cyclic LR scheduling
 
-- Implement and test wCE + Dice loss
+x Implement and test wCE + Dice loss
 
-- Implement option to save model output as foreground probabilities in inference
-
-
+x Implement option to save model output as foreground probabilities in inference
+x Enable compression while writing
 
 - Implement validation metrics:
     x Dice and Jaccard for now. 
@@ -12,7 +11,8 @@
 
 
 - Improve WandB logging:
-    - Log system-related stuff 
+    x Different logging steps for training and validation
+    x Log system-related stuff 
     - Log richer info - prediction, etc.
 
 

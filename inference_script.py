@@ -7,8 +7,8 @@ from tqdm import tqdm
 
 from datautils.preprocessing import Preprocessor
 from datasets.hecktor_unimodal_dataset import HECKTORUnimodalDataset
-from datautils.patch_sampling import PatchSampler3D, PatchQueue, get_num_valid_patches
-from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
+from datautils.patch_sampling import PatchSampler3D, PatchQueue
+from datautils.patch_aggregation import PatchAggregator3D
 import nnmodules
 from inferutils.inferer import Inferer
 import config_utils

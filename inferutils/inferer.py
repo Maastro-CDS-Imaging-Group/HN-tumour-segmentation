@@ -6,7 +6,7 @@ from tqdm import tqdm
 import SimpleITK as sitk
 
 from datautils.conversion import *
-from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
+from datautils.patch_aggregation import PatchAggregator3D, get_pred_patches_list
 from inferutils.metrics import volumetric_dice
 
 logging.basicConfig(level=logging.DEBUG)
@@ -19,9 +19,12 @@ class Inferer():
                  volume_loader, patch_sampler, patch_aggregator,
                  hardware_config, input_data_config, inference_config):
         
-        self.model = model
-        self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}", map_location=device))
-        if hardware_config['enable-distributed']:
+        self.hardware_config = hardware_config
+        self.device = self.hardware_config['device']
+
+        self.model = model.to(self.device)
+        self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}", map_location=self.device))
+        if self.hardware_config['enable-distributed']:
             self.model = torch.nn.DataParallel(self.model)
         self.model.eval()
         self.softmax = torch.nn.Softmax(dim=1) # Softmax along channel dimension
@@ -30,11 +33,8 @@ class Inferer():
         self.volume_loader = volume_loader
         self.patch_sampler = patch_sampler
         self.patch_aggregator = patch_aggregator
-
-        self.device = hardware_config['device']
  
         # Configs
-        self.hardware_config = hardware_config
         self.input_data_config = input_data_config
         self.inference_config = inference_config
 
@@ -50,14 +50,14 @@ class Inferer():
         for i, patient_dict in enumerate(tqdm(self.volume_loader)):
             # Run one inference step - split patient volumes into patches, run forward pass with the patches, 
             # aggregate prediction patches into full volume labelmap and compute dice score
-            patient_pred_labelmap, patient_dice_score = self._inference_step(patient_dict)
+            patient_pred_volume, patient_dice_score = self._inference_step(patient_dict)
         
             # Save the results -- pred volumes in nrrd, dice in csv 
             p_id = self.patient_ids[i]
             if self.inference_config['save-results']:
                 output_nrrd_filename = f"{p_id}_ct_gtvt.nrrd"
-                pred_labelmap_sitk = np2sitk(patient_pred_labelmap, has_whd_ordering=False)
-                sitk.WriteImage(pred_labelmap_sitk, f"{self.inference_config['output-save-dir']}/predicted/{output_nrrd_filename}")
+                pred_volume_sitk = np2sitk(patient_pred_volume, has_whd_ordering=False)
+                sitk.WriteImage(pred_volume_sitk, f"{self.inference_config['output-save-dir']}/predicted/{output_nrrd_filename}", True)
             dice_scores[p_id] = patient_dice_score
             avg_dice += patient_dice_score
 
@@ -67,6 +67,8 @@ class Inferer():
         logging.debug(df)
         if self.inference_config['save-results']:
             df.to_csv(f"{self.inference_config['output-save-dir']}/dice_scores.csv")
+
+        logging.debug(f"Saved results to: {self.inference_config['output-save-dir']}")
 
 
     def _inference_step(self, patient_dict):
@@ -104,14 +106,16 @@ class Inferer():
                 pred_patches = self.model(input_patches)
                 pred_patches = self.softmax(pred_patches)
                 
-                # Convert the predicted batch of probabilities to a list of labelmap patches, and store
-                patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches)) 
+                # Convert the predicted batch of probabilities to a list of labelmap patches (or foreground probabilities), and store
+                patient_pred_patches_list.extend(get_pred_patches_list(pred_patches, self.inference_config['save-as-probabilities'])) 
 
             # Aggregate into full volume
-            patient_pred_labelmap = self.patch_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
+            patient_pred_volume = self.patch_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
+            # print(patient_pred_volume)
         
         # Compute metrics, if needed
         if self.inference_config['compute-metrics']:
-            patient_dice_score = volumetric_dice(patient_pred_labelmap.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
+            patient_pred_labelmap = (patient_pred_volume > 0.5).long().cpu().numpy()
+            patient_dice_score = volumetric_dice(patient_pred_labelmap, patient_dict['target-labelmap'].cpu().numpy())
 
-        return patient_pred_labelmap.cpu().numpy(), patient_dice_score
+        return patient_pred_volume.cpu().numpy(), patient_dice_score

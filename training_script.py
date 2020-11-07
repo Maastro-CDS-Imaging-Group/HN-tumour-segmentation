@@ -1,4 +1,4 @@
-import logging, argparse
+import logging, argparse, random
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -6,12 +6,17 @@ from tqdm import tqdm
 
 from datautils.preprocessing import Preprocessor
 from datasets.hecktor_unimodal_dataset import HECKTORUnimodalDataset
-from datautils.patch_sampling import PatchSampler3D, PatchQueue, get_num_valid_patches
-from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
+from datautils.patch_sampling import PatchSampler3D, PatchQueue
+from datautils.patch_aggregation import PatchAggregator3D
 import nnmodules
 from trainutils.trainer import Trainer
 import config_utils
 
+# Reproducibility settings
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
+torch.backends.cudnn.benchmark = False
 
 # Constants
 DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"

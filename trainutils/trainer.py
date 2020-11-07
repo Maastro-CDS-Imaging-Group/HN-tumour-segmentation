@@ -6,11 +6,10 @@ from tqdm import tqdm
 import wandb
 
 from trainutils.loss_functions import build_loss_function
-from datautils.patch_aggregation import PatchAggregator3D, get_pred_labelmap_patches_list
+from datautils.patch_aggregation import PatchAggregator3D, get_pred_patches_list
 from inferutils.metrics import volumetric_dice
 
 logging.basicConfig(level=logging.DEBUG)
-
 
 
 class Trainer():
@@ -20,14 +19,14 @@ class Trainer():
                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
                 hardware_config, input_data_config, training_config, validation_config, logging_config):
         
+        # Hardware
         self.hardware_config = hardware_config
         self.device = self.hardware_config['device']
 
+        # Model
         self.model = model.to(self.device)
-        if self.hardware_config['enable-distributed']:
-            self.model = torch.nn.DataParallel(self.model)
-            # print(self.model.module.nn_name)
-
+        
+        # Data pipeline 
         self.train_patch_loader = train_patch_loader
         self.val_volume_loader = val_volume_loader
         self.val_sampler = val_sampler
@@ -49,30 +48,35 @@ class Trainer():
         # Default starting epoch, when starting training from scratch
         self.start_epoch = 1
 
+        # For saving to checkpoints 
         self.checkpoint_dir = f"{self.training_config['checkpoint-root-dir']}/{self.logging_config['run-name']}"
-        # if not os.path.isdir(self.checkpoint_dir):
         os.makedirs(self.checkpoint_dir, exist_ok=True)
 
-        # Settings, if training to be continued from a checkpoint
+        # For loading from checkpoints to continue training
         if training_config['continue-from-checkpoint']:
             # Checkpoint name example - unet3d_pet_e005.pt
             self.model.load_state_dict(torch.load(f"{self.checkpoint_dir}/{training_config['load-checkpoint-filename']}"))
             self.start_epoch = int(training_config['load-checkpoint-filename'].split('.')[0][-3:]) + 1
 
         # Cyclic LR scheduler 
-        batches_per_epoch = len(self.train_patch_loader)
-        if self.start_epoch == 1:
-            last_iteration = -1
-        else:
-            last_iteration = (self.start_epoch-1) * batches_per_epoch
-
         if self.training_config['use-lr-scheduler']:
+            
+            batches_per_epoch = len(self.train_patch_loader)
+
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer, 
-                                                                base_lr=0.0001, max_lr=0.002,
+                                                                base_lr=0.0001, max_lr=0.001,
                                                                 step_size_up=5 * batches_per_epoch,
                                                                 mode='triangular2',
-                                                                cycle_momentum=False,
-                                                                last_epoch=last_iteration)
+                                                                cycle_momentum=False)
+
+            # If continuing training, use a dummy for loop to update the scheduler's state (hacky approach)
+            last_iteration = (self.start_epoch-1) * batches_per_epoch
+            if self.start_epoch > 1: 
+                for _ in range(last_iteration):  self.scheduler.step()
+
+        # Distributed training
+        if self.hardware_config['enable-distributed']:
+            self.model = torch.nn.DataParallel(self.model)
 
         # Logging related
         if self.logging_config['enable-wandb']:
@@ -107,10 +111,13 @@ class Trainer():
             logging.debug(f"Loading checkpoint: {self.training_config['load-checkpoint-filename']}")
             logging.debug(f"Continuing from epoch {self.start_epoch}")
 
-        
+        # Batch counter, to include in the WandB log
+        batch_counter = (self.start_epoch - 1) * len(self.train_patch_loader) + 1
+
         for epoch in range(self.start_epoch, self.start_epoch + self.training_config['num-epochs']):
             logging.debug(f"Epoch {epoch}")
 
+            # Per epoch metrics
             epoch_train_loss = 0
             epoch_val_loss = 0
             epoch_val_dice = 0
@@ -125,7 +132,14 @@ class Trainer():
 
                 # Accumulate loss value
                 epoch_train_loss += train_loss
-                
+
+                # Log into WandB the training loss of the batch
+                if self.logging_config['enable-wandb']:
+                    wandb.log({'batch-train-loss': train_loss,                            
+                               'batch-counter': batch_counter,
+                               'epoch': epoch})
+                batch_counter += 1
+
             epoch_train_loss /= len(self.train_patch_loader)
 
             # Clear CUDA cache
@@ -160,14 +174,10 @@ class Trainer():
             logging.debug("")
 
             if self.logging_config['enable-wandb']:
-                wandb.log(
-                          {
-                           'train-loss': epoch_train_loss,
+                wandb.log({'train-loss': epoch_train_loss,
                            'val-loss': epoch_val_loss,
-                           'val-dice': epoch_val_dice
-                          },
-                         step=epoch
-                         )
+                           'val-dice': epoch_val_dice,
+                           'epoch': epoch})
 
             # Checkpointing --
             if self.training_config['enable-checkpointing']:
@@ -271,7 +281,7 @@ class Trainer():
 
                 # Convert the predicted batch of probabilities to a list of labelmap patches, and store
                 pred_patches = self.softmax(pred_patches)
-                patient_pred_patches_list.extend(get_pred_labelmap_patches_list(pred_patches)) 
+                patient_pred_patches_list.extend(get_pred_patches_list(pred_patches, as_probabilities=False)) 
                 
             # Calculate avergae validation loss for this patient
             patient_val_loss /= (self.validation_config['valid-patches-per-volume'] / self.validation_config['batch-of-patches-size'])

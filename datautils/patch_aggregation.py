@@ -28,10 +28,6 @@ class PatchAggregator3D():
 
         self.valid_focal_points = self._get_valid_focal_points() # Valid focal points in volume coordinates
 
-        # print("N focal points", len(self.valid_focal_points))
-        # print("focal pts:", self.valid_focal_points)
-        # print("self.volume_size:",self.volume_size)
-
     def _get_valid_focal_points(self):
         patch_size = np.array(self.patch_size)
         valid_indx_range = [
@@ -86,50 +82,30 @@ class PatchAggregator3D():
 
 
 
-def get_pred_labelmap_patches_list(pred_prob_patches):
+def get_pred_patches_list(pred_prob_patches, as_probabilities=False):
     """
     Get a list of predicted labelmap patches from the the model's predicted batch of probabilities patches
 
     Args:
         pred_prob_patches: Tensor. Batch of predicted probabilites patches. Shape (N,C,D,H,W)
+        as_probabilites: Bool. If True, foreground (i.e. GTV) probabilites are retained
     Returns:
-        pred_labelmap_patches_list: List (length N) of tensors. Each element is a tensor of shape (D,H,W)
+        pred_patches_list: List of length N. Each element is a tensor of shape (D,H,W)
     """
-    pred_labelmap_patches_list = []
+    pred_patches_list = []
 
     for i in range(pred_prob_patches.shape[0]):
 
-        # Convert to numpy, collapse channel dim for the predicted patch
+        # Convert to numpy
         pred_patch = pred_prob_patches[i] # Shape (C,D,H,W)
-        pred_patch = pred_patch.argmax(dim=0)  # Shape (D,H,W)
 
+        if as_probabilities: # Keep only the foreground probabilities        
+            pred_patch = pred_patch[1,:,:,:]  # Shape (D,H,W)
+        else: # Or convert to labelmap
+            pred_patch = pred_patch.argmax(dim=0)  # Shape (D,H,W)
+    
         # Accumulate in the list
-        pred_labelmap_patches_list.append(pred_patch)
+        pred_patches_list.append(pred_patch)
 
-    return pred_labelmap_patches_list
-
-
-
-
-def get_pred_labelmap_patches_list(pred_prob_patches):
-    """
-    Get a list of predicted labelmap patches from the the model's predicted batch of probabilities patches
-
-    Args:
-        pred_prob_patches: Tensor. Batch of predicted probabilites patches. Shape (N,C,D,H,W)
-    Returns:
-        pred_labelmap_patches_list: List of length N. Each element is a tensor of shape (D,H,W)
-    """
-    pred_labelmap_patches_list = []
-
-    for i in range(pred_prob_patches.shape[0]):
-
-        # Convert to numpy, collapse channel dim for the predicted patch
-        pred_patch = pred_prob_patches[i] # Shape (C,D,H,W)
-        pred_patch = pred_patch.argmax(dim=0)  # Shape (D,H,W)
-
-        # Accumulate in the list
-        pred_labelmap_patches_list.append(pred_patch)
-
-    return pred_labelmap_patches_list
+    return pred_patches_list
 
