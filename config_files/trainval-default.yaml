@@ -7,7 +7,7 @@ hardware-config:
 
 # Training config
 training-config:
-  train-subset-name: crossval-CHGJ-training
+  train-subset-name: crossval-CHUM-training
   loss-name: wce+dice
   num-epochs: 30
   learning-rate: 0.0001
@@ -21,7 +21,7 @@ training-config:
 
 # Validation config
 validation-config:
-  val-subset-name: crossval-CHGJ-validation
+  val-subset-name: crossval-CHUM-validation
 
 
 # WandB logging config

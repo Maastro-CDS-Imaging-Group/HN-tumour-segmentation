@@ -3,8 +3,8 @@
 
 # Job configuration ---
 
-#SBATCH --job-name=crS-unet3d-pet_aug-cvCHGJ
-#SBATCH --output=slurm_job_logs/crS-unet3d-pet_aug-cvCHGJ.%j.log
+#SBATCH --job-name=crS-unet3d-pet-cvCHUM
+#SBATCH --output=slurm_job_logs/crS-unet3d-pet-cvCHUS.%j.log
 
 ## OpenMP settings
 #SBATCH --cpus-per-task=4
@@ -35,7 +35,7 @@ data_config_file="./config_files/data-crS_rs113-unimodal_default.yaml"
 nn_config_file="./config_files/nn-unet3d_default.yaml"
 trainval_config_file="./config_files/trainval-default.yaml"
 
-run_name="crS-unet3d-pet_aug-cvCHGJ"
+run_name="crS-unet3d-pet-cvCHUM"
 
 $python_interpreter $python_file --data_config_file $data_config_file \
                                  --nn_config_file $nn_config_file \

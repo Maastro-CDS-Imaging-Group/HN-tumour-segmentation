@@ -69,7 +69,7 @@ class Trainer():
                                                                 mode='triangular2',
                                                                 cycle_momentum=False)
 
-            # If continuing training, use a dummy for loop to update the scheduler's state (hacky approach)
+            # If continuing training from checkpoint, use a dummy for loop to update the scheduler's state (hacky approach)
             last_iteration = (self.start_epoch-1) * batches_per_epoch
             if self.start_epoch > 1: 
                 for _ in range(last_iteration):  self.scheduler.step()
@@ -88,10 +88,12 @@ class Trainer():
             wandb.config.update({'dataset-name': self.training_config['dataset-name'],
                                  'train-subset-name': self.training_config['train-subset-name'],
                                  'val-subset-name': self.validation_config['val-subset-name'],
-                                'batch-of-patches-size': self.validation_config['batch-of-patches-size'],
-                                'learning-rate': self.training_config['learning-rate'],
-                                'start-epoch': self.start_epoch,
-                                'num-epochs': self.start_epoch + self.training_config['num-epochs']})
+                                 'loss-name': self.training_config['loss-name'],
+                                 'batch-of-patches-size': self.validation_config['batch-of-patches-size'],
+                                 'learning-rate': self.training_config['learning-rate'],
+                                 'use-lr-scheduler': self.training_config['use-lr-scheduler'],
+                                 'start-epoch': self.start_epoch,
+                                 'num-epochs': self.start_epoch + self.training_config['num-epochs'] - 1})
             wandb.watch(self.model)
 
         # Log some stuff
