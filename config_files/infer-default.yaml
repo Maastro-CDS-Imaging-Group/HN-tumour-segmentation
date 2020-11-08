@@ -7,9 +7,9 @@ hardware-config:
 
 # Inference config
 inference-config:
-  subset-name: crossval-CHUM-validation
-  model-filepath: ./model_checkpoints/cyclic-scheduler-test-run/unet3d_pet_e021.pt
-  compute-metrics: True
+  subset-name: crossval-CHGJ-validation
+  model-filepath: ./model_checkpoints/crS-unet3d-pet_aug-cvCHGJ/unet3d_pet_e025.pt
+  compute-metrics: False
   save-results: True
-  save-as-probabilities: False
+  save-as-probabilities: True
   output-save-dir: /home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113

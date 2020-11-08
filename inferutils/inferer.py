@@ -23,10 +23,13 @@ class Inferer():
         self.device = self.hardware_config['device']
 
         self.model = model.to(self.device)
-        self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}", map_location=self.device))
         if self.hardware_config['enable-distributed']:
             self.model = torch.nn.DataParallel(self.model)
+            self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}"))
+        else:
+            self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}", map_location=self.device))
         self.model.eval()
+
         self.softmax = torch.nn.Softmax(dim=1) # Softmax along channel dimension
         logging.debug(f"Loaded model: {inference_config['model-filepath']}")
 
@@ -58,15 +61,17 @@ class Inferer():
                 output_nrrd_filename = f"{p_id}_ct_gtvt.nrrd"
                 pred_volume_sitk = np2sitk(patient_pred_volume, has_whd_ordering=False)
                 sitk.WriteImage(pred_volume_sitk, f"{self.inference_config['output-save-dir']}/predicted/{output_nrrd_filename}", True)
-            dice_scores[p_id] = patient_dice_score
-            avg_dice += patient_dice_score
-
-        avg_dice /= len(self.volume_loader)
-        dice_scores['average'] = avg_dice
-        df = pd.DataFrame.from_dict(dice_scores, orient="index")
-        logging.debug(df)
-        if self.inference_config['save-results']:
-            df.to_csv(f"{self.inference_config['output-save-dir']}/dice_scores.csv")
+            if self.inference_config['compute-metrics']:
+                dice_scores[p_id] = patient_dice_score
+                avg_dice += patient_dice_score
+        
+        if self.inference_config['compute-metrics']:
+            avg_dice /= len(self.volume_loader)
+            dice_scores['average'] = avg_dice
+            df = pd.DataFrame.from_dict(dice_scores, orient="index")
+            logging.debug(df)
+            if self.inference_config['save-results']:
+                df.to_csv(f"{self.inference_config['output-save-dir']}/dice_scores.csv")
 
         logging.debug(f"Saved results to: {self.inference_config['output-save-dir']}")
 
@@ -107,7 +112,7 @@ class Inferer():
                 pred_patches = self.softmax(pred_patches)
                 
                 # Convert the predicted batch of probabilities to a list of labelmap patches (or foreground probabilities), and store
-                patient_pred_patches_list.extend(get_pred_patches_list(pred_patches, self.inference_config['save-as-probabilities'])) 
+                patient_pred_patches_list.extend(get_pred_patches_list(pred_patches, as_probabilities=self.inference_config['save-as-probabilities'])) 
 
             # Aggregate into full volume
             patient_pred_volume = self.patch_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
@@ -115,7 +120,9 @@ class Inferer():
         
         # Compute metrics, if needed
         if self.inference_config['compute-metrics']:
-            patient_pred_labelmap = (patient_pred_volume > 0.5).long().cpu().numpy()
+            patient_pred_labelmap = (patient_pred_volume >= 0.5).long().cpu().numpy()
             patient_dice_score = volumetric_dice(patient_pred_labelmap, patient_dict['target-labelmap'].cpu().numpy())
+        else:
+            patient_dice_score = None
 
         return patient_pred_volume.cpu().numpy(), patient_dice_score
