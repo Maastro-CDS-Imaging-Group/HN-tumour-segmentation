@@ -8,8 +8,8 @@ hardware-config:
 # Inference config
 inference-config:
   subset-name: crossval-CHGJ-validation
-  model-filepath: ./model_checkpoints/crS-unet3d-pet_aug-cvCHGJ/unet3d_pet_e025.pt
-  compute-metrics: False
-  save-results: True
+  model-filepath: ./model_checkpoints/crS-unet3d-pet_aug-cvCHGJ/unet3d_pet_e030.pt
+  compute-metrics: True
+  save-results: False
   save-as-probabilities: True
   output-save-dir: /home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113

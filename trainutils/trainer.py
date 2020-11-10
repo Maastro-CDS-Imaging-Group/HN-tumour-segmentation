@@ -65,7 +65,7 @@ class Trainer():
 
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer, 
                                                                 base_lr=0.0001, max_lr=0.001,
-                                                                step_size_up=5 * batches_per_epoch,
+                                                                step_size_up=10 * batches_per_epoch,
                                                                 mode='triangular2',
                                                                 cycle_momentum=False)
 
@@ -257,7 +257,7 @@ class Trainer():
         with torch.no_grad(): # Disable autograd
             # Take batch_of_patches_size number of patches at a time and push through the network
             for p in range(0, self.validation_config['valid-patches-per-volume'], self.validation_config['batch-of-patches-size']):
-                
+
                 # Get input patches
                 if self.input_data_config['is-bimodal']: # In case of bimodal input                   
                     if self.input_data_config['input-representation'] == 'separate-volumes':  # For PET and CT as separate volumes
@@ -290,6 +290,6 @@ class Trainer():
 
             # Aggregate and compute dice
             patient_pred_labelmap = self.val_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
-        patient_dice_score = volumetric_dice(patient_pred_labelmap.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
+            patient_dice_score = volumetric_dice(patient_pred_labelmap.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
 
         return patient_val_loss, patient_dice_score
