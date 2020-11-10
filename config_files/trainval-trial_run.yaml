@@ -1,30 +1,36 @@
 
-# Hardware
-device: cuda
+# Key-word arguments for the Trainer class
+trainer-kwargs:
+
+  # Hardware config dict
+  hardware_config:
+    device: cuda  # Default device
+    enable-distributed: True
 
 
-# Training config
-training-config:
-  train-subset-name: crossval-CHUM-training
-  loss-name: wce
-  num-epochs: 12
-  learning-rate: 0.0003
-  enable-checkpointing: False
-  checkpoint-step: 3
-  checkpoint-root-dir: ./model_checkpoints
-  continue-from-checkpoint: False
-  load-checkpoint-filename: unet3d_pet_e030.pt
+  # Training config dict
+  training_config:
+    train-subset-name: crossval-CHGJ-training
+    loss-name: wce
+    num-epochs: 5
+    learning-rate: 0.0001
+    use-lr-scheduler: False
+    enable-checkpointing: False
+    checkpoint-step: 5
+    checkpoint-root-dir: ./model_checkpoints
+    continue-from-checkpoint: False
+    load-checkpoint-filename: None 
 
 
-# Validation config
-validation-config:
-  val-subset-name: crossval-CHUM-validation
+  # Validation config dict
+  validation_config:
+    val-subset-name: crossval-CHGJ-validation
 
 
-# WandB logging config
-logging-config:
-  run-name: trial-run
-  enable-wandb: False
-  wandb-entity: cnmy-ro
-  wandb-project: hn-gtv-segmentation
-  
+  # WandB logging config dict
+  logging_config:
+    run-name: default-run
+    enable-wandb: False
+    wandb-entity: cnmy-ro
+    wandb-project: hn-gtv-segmentation
+    

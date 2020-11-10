@@ -1,15 +1,17 @@
 
-# Hardware
-hardware-config:
-  device: cuda
-  enable-distributed: True
-  
+# Key-word arguments for the Inferer class
+inferer-kwargs:
 
-# Inference config
-inference-config:
-  subset-name: crossval-CHGJ-validation
-  model-filepath: ./model_checkpoints/crS-unet3d-pet_aug-cvCHGJ/unet3d_pet_e030.pt
-  compute-metrics: True
-  save-results: False
-  save-as-probabilities: True
-  output-save-dir: /home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113
+  # Hardware
+  hardware-config:
+    device: cuda
+    enable-distributed: True
+    
+  # Inference config
+  inference-config:
+    subset-name: crossval-CHGJ-validation
+    model-filepath: ./model_checkpoints/crS-unet3d-pet_aug-cvCHGJ/unet3d_pet_e030.pt
+    compute-metrics: True
+    save-results: False
+    save-as-probabilities: True
+    output-save-dir: /home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113

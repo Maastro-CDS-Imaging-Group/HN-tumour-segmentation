@@ -15,24 +15,24 @@ import datautils.transforms as transforms
 AUG_PROBABILITY = 0.5
 
 
-class HECKTORUnimodalDataset(torch.utils.data.Dataset):
+class HECKTORPETCTDataset(torch.utils.data.Dataset):
 	"""
-	Dataset class to interface with the HECKTOR data. Depending on the input_modality parameter, either PET or CT will be loaded.
-	The target GTV masks for only the HECKTOR train set (4 centres from Quebec) are available.
+	Dataset class to interface with the HECKTOR PET-CT data.
+	The target GTv masks for only the HECKTOR train set (4 centres from Quebec) are available.
 	Centres and patient distribution:
 		- CHGJ -- 55
 		- CHMR -- 18
 		- CHUM -- 72
 		- CHUS -- 56
 	"""
-	def __init__(self, data_dir, patient_id_filepath, mode='training', preprocessor=None, input_modality='PET', augment_data=False):
+	def __init__(self, data_dir, patient_id_filepath, mode='training', preprocessor=None, input_representation='separate-volumes', augment_data=False):
 		"""
 		Parameters:
 			data_dir
 			patient_id_filepath
 			mode -- For default split: 'training', 'validation' -- (Takes CHUM for validation)
 					  For cross validation: 'crossval-CHGJ-training', 'crossval-CHGJ-validation', ...
-			input_modality -- 'PET' or 'CT'
+			input_representation -- 'separate-volumes' or 'multichannel-volume'
 			augment_data -- True or False
 		"""
 		self.data_dir = data_dir
@@ -55,7 +55,7 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 			elif 'validation' in self.mode:
 				self.patient_ids = [p_id for p_id in self.patient_ids if val_centre in p_id]
 
-		self.input_modality = input_modality
+		self.input_representation = input_representation
 
 		self.spacing_dict = {'xy-spacing': 1.0, 'slice-thickness': 3.0}
 		self.preprocessor = preprocessor
@@ -87,54 +87,66 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 		p_id = self.patient_ids[idx]
 
 		# Read data files into sitk images -- (W,H,D) format
-		if self.input_modality == 'PET':
-			input_image_sitk = sitk.ReadImage(f"{self.data_dir}/{p_id}_pt.nii.gz")
-		elif self.input_modality == 'CT':
-			input_image_sitk = sitk.ReadImage(f"{self.data_dir}/{p_id}_ct.nii.gz")
+		PET_sitk = sitk.ReadImage(f"{self.data_dir}/{p_id}_pt.nii.gz")
+		CT_sitk = sitk.ReadImage(f"{self.data_dir}/{p_id}_ct.nii.gz")
 		target_labelmap_sitk = sitk.ReadImage(f"{self.data_dir}/{p_id}_ct_gtvt.nii.gz")
 
 		# Convert to ndarrays -- Keep the (W,H,D) dim ordering
-		input_image_np = sitk2np(input_image_sitk, keep_whd_ordering=True)
+		PET_np = sitk2np(PET_sitk, keep_whd_ordering=True)
+		CT_np = sitk2np(CT_sitk, keep_whd_ordering=True)
 		target_labelmap_np = sitk2np(target_labelmap_sitk, keep_whd_ordering=True)
 
 		# Smooth PET and CT
-		input_image_np = self.preprocessor.smoothing_filter(input_image_np, modality=self.input_modality)
+		PET_np = self.preprocessor.smoothing_filter(PET_np, modality='PET')
+		CT_np = self.preprocessor.smoothing_filter(CT_np, modality='CT')
 
 		# Data augmentation
 		if 'training' in self.mode and self.augment_data:
 			if random.random() < AUG_PROBABILITY:
-				input_image_np, target_labelmap_np = self.apply_transform(input_image_np, target_labelmap_np)
+				PET_np, CT_np, target_labelmap_np = self.apply_transform(PET_np, CT_np, target_labelmap_np)
 
-		# Normalize the intensity scale
-		input_image_np = self.preprocessor.normalize_intensity(input_image_np, modality=self.input_modality)
+		# Normalize the intensity values
+		PET_np = self.preprocessor.normalize_intensity(PET_np, modality='PET')
+		CT_np = self.preprocessor.normalize_intensity(CT_np, modality='CT')
 
-		# Construct the sample dict -- Convert to tensor and change dim ordering to (D,H,W).
-		# Input image will have shape (1,D,H,W). Target labelmap will have (D,H,W)
-		sample_dict = {self.input_modality: np2tensor(input_image_np).permute(2,1,0).unsqueeze(dim=0),
-                       'target-labelmap': np2tensor(target_labelmap_np).permute(2,1,0).long()
-		              }
+		# Construct the sample dict -- Convert to tensor and change dim ordering to (D,H,W)
+		if self.input_representation == 'separate-volumes':
+			# Provide PET and CT as 2 separate input tensors, each of shape (1,D,H,W). target mask will be of shape (D,H,W)
+			sample_dict = {'PET': np2tensor(PET_np).permute(2,1,0).unsqueeze(dim=0),
+	                       'CT': np2tensor(CT_np).permute(2,1,0).unsqueeze(dim=0),
+	                       'target-labelmap': np2tensor(target_labelmap_np).permute(2,1,0).long()
+			              }
+
+		elif self.input_representation == 'multichannel-volume':
+			# Pack PET and CT into a single input tensor of shape (2,D,H,W). target mask will be of shape (D,H,W)
+			PET_tnsr = np2tensor(PET_np).permute(2,1,0)
+			CT_tnsr = np2tensor(CT_np).permute(2,1,0)
+			sample_dict = {'PET-CT': torch.stack([PET_tnsr, CT_tnsr], dim=0),
+	                       'target-labelmap': torch.from_numpy(target_labelmap_np).permute(2,1,0)
+						  }
 
 		return sample_dict
 
 
-	def apply_transform(self, input_image_np, target_labelmap_np):
+	def apply_transform(self, PET_np, CT_np, target_labelmap_np):
 		r = random.random()
 		if  r < 0.75:
 			# Apply one of the 3 TorchIO spatial transforms. Need to pack the volumes into a TorchIO Subject for this.
-			subject_tio = self._create_torchio_subject(input_image_np, target_labelmap_np)
+			subject_tio = self._create_torchio_subject(PET_np, CT_np, target_labelmap_np)
 			subject_tio = self.torchio_oneof_transform(subject_tio)
-			input_image_np = subject_tio[self.input_modality].numpy().squeeze()
+			PET_np = subject_tio['PET'].numpy().squeeze()
+			CT_np = subject_tio['CT'].numpy().squeeze()
 			target_labelmap_np = subject_tio['target-labelmap'].numpy().squeeze()
 		else:
 			# PET intensity stretching
-			if self.input_modality == 'PET':
-				input_image_np = self.PET_stretch_transform(input_image_np)
-		return input_image_np, target_labelmap_np
+			PET_np = self.PET_stretch_transform(PET_np)
+		return PET_np, CT_np, target_labelmap_np
 
-	def _create_torchio_subject(self, input_image_np, target_labelmap_np):
-		input_image_tio = torchio.Image(tensor=np2tensor(input_image_np).unsqueeze(dim=0), type=torchio.INTENSITY, affine=self.affine_matrix)
+	def _create_torchio_subject(self, PET_np, CT_np, target_labelmap_np):
+		PET_tio = torchio.Image(tensor=np2tensor(PET_np).unsqueeze(dim=0), type=torchio.INTENSITY, affine=self.affine_matrix)
+		CT_tio = torchio.Image(tensor=np2tensor(CT_np).unsqueeze(dim=0), type=torchio.INTENSITY, affine=self.affine_matrix)
 		target_labelmap_tio = torchio.Image(tensor=np2tensor(target_labelmap_np).unsqueeze(dim=0), type=torchio.LABEL, affine=self.affine_matrix)
-		subject_dict = {self.input_modality: input_image_tio, 'target-labelmap': target_labelmap_tio}
+		subject_dict = {'PET': PET_tio, 'CT': CT_tio, 'target-labelmap': target_labelmap_tio}
 		subject_tio = torchio.Subject(subject_dict)
 		return subject_tio
 
@@ -144,16 +156,15 @@ if __name__ == '__main__':
 
 	from data_utils.preprocessing import Preprocessor
 
-	data_dir = "/home/chinmay/Datasets/HECKTOR/hecktor_train/crFHN_rs113_hecktor_nii"
+	data_dir = "/home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train/crFHN_rs113_hecktor_nii"
 	patient_id_filepath = "../hecktor_meta/patient_IDs_train.txt"
 	preprocessor = Preprocessor()
 
-	dataset = HECKTORUnimodalityDataset(data_dir,
-			                          patient_id_filepath,
-			                          mode='training',
-			                          preprocessor=preprocessor,
-			                          input_modality='PET',
-			                          augment_data=False)
+	dataset = HECKTORPETCTDataset(data_dir,
+		                          patient_id_filepath,
+		                          mode='training',
+		                          preprocessor=preprocessor,
+		                          input_representation='separate-volumes',
+		                          augment_data=False)
 
 	sample = dataset[0]
-	print(sample['PET'].shape)

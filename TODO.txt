@@ -5,6 +5,9 @@ x Implement and test wCE + Dice loss
 x Implement option to save model output as foreground probabilities in inference
 x Enable compression while writing
 
+- Simplify the config system:
+    - State kwargs as they are in the config files ('_' rather than '-')
+
 - Implement validation metrics:
     x Dice and Jaccard for now. 
     - Then Surface Dice

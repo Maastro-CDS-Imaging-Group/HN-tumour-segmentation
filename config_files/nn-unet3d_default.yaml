@@ -1,7 +1,9 @@
 
 nn-name: unet3d
 
-nn-config:
-  in-channels: 1
+
+nn-kwargs:
+
+  in_channels: 1
   residual: True
   normalization: batch  # None or batch

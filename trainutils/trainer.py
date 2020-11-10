@@ -2,6 +2,7 @@ import os
 import logging
 import numpy as np
 import torch
+from torch.nn import DataParallel
 from tqdm import tqdm
 import wandb
 
@@ -76,7 +77,7 @@ class Trainer():
 
         # Distributed training
         if self.hardware_config['enable-distributed']:
-            self.model = torch.nn.DataParallel(self.model)
+            self.model = DataParallel(self.model)
 
         # Logging related
         if self.logging_config['enable-wandb']:
@@ -141,7 +142,7 @@ class Trainer():
                                'batch-counter': batch_counter,
                                'epoch': epoch})
                 batch_counter += 1
-
+                
             epoch_train_loss /= len(self.train_patch_loader)
 
             # Clear CUDA cache

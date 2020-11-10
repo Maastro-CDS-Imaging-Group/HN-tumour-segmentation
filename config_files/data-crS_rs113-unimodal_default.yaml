@@ -16,23 +16,23 @@ is-bimodal: False
 # --------------------------------------------------------
 # Patient dataset
 # --------------------------------------------------------
-patient-dataset:
-  input-modality: PET
-  augment-data: True
+patient-dataset-kwargs:
+  input_modality: PET
+  augment_data: True
 
 # Note: The train/val/inference subset name is specified in trainval and infer config files
 
 # --------------------------------------------------------
 # Preprocessor
 # --------------------------------------------------------
-preprocessor:
-  smooth-sigma-mm: 
+preprocessor-kwargs:
+  smooth_sigma_mm: 
     PET: 2.0
     CT: None
-  normalization-method:
+  normalization_method:
     PET: histogram-mapping
     CT: clip-and-rescale
-  clipping-range:
+  clipping_range:
     PET:
       - 0
       - 20
@@ -59,8 +59,8 @@ batch-of-patches-size: 4
 # --------------------------------------------------------
 
 # Patch sampler
-train-patch-sampler:
-  focal-point-stride:
+train-patch-sampler-kwargs:
+  focal_point_stride:
     - 4
     - 4
     - 4
@@ -71,12 +71,12 @@ train-patch-sampler:
     - 0
 
 # Patch queue
-train-patch-queue:
-  max-length: 128
-  samples-per-volume: 32
-  num-workers: 4
-  shuffle-subjects: True
-  shuffle-patches: True
+train-patch-queue-kwargs:
+  max_length: 128
+  samples_per_volume: 32
+  num_workers: 4
+  shuffle_subjects: True
+  shuffle_patches: True
 
 
 # --------------------------------------------------------
@@ -87,8 +87,8 @@ train-patch-queue:
 #  (60,60,20) and (44,44,4)
 
 # Patch sampler
-val-patch-sampler:
-  focal-point-stride:
+val-patch-sampler-kwargs:
+  focal_point_stride:
     - 60
     - 60
     - 20
@@ -99,12 +99,12 @@ val-patch-sampler:
     - 4
 
 # Patch aggregator 
-val-patch-aggregator:
-  focal-point-stride:
+val-patch-aggregator-kwargs:
+  focal_point_stride:
     - 60
     - 60
     - 20
-  overlap-handling: union
+  overlap_handling: union
   unpadding:
     - 44
     - 44

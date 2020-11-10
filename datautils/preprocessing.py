@@ -40,7 +40,7 @@ class Preprocessor():
     def smoothing_filter(self, image_np, modality):
         sigma_mm = self.smooth_sigma_mm[modality]
 
-        if sigma_mm is None:
+        if not isinstance(sigma_mm, float) or not isinstance(sigma_mm, int):
             return image_np
 
         sigma = (sigma_mm / self.spacing_dict['xy-spacing'],

@@ -1,36 +1,24 @@
-import numpy as np
 import torch
-from trainutils.loss_functions import *
-from inferutils.metrics import volumetric_dice
+from torch.nn.functional import interpolate
 
-# pred = np.array([
-#                  [[0.0, 1.0],
-#                   [0.0, 1.0]],
-                
-#                  [[1.0, 0.0],
-#                   [1.0, 0.0]]
-#                 ])
+import nnmodules
 
-pred = np.array([
-                 [[0.0, 1.0],
-                  [1.0, 0.0]],
-                
-                 [[1.0, 0.0],
-                  [0.0, 1.0]]
-                ])                
+backbone_config = {'in_channels': 1, 
+                   'out_channels_first_layer': 32, 
+                   'num_encoding_blocks': 4, 
+                   'residual': True, 
+                   'normalization': 'batch' }
 
-pred = torch.tensor(pred, requires_grad=True)
-print(pred.is_leaf) 
+attention_module_config = {'in_channels': 1, 
+                           'out_channels_first_layer': 32, 
+                           'num_encoding_blocks': 4, 
+                           'out_classes':1,
+                           'residual': True, 
+                           'normalization': 'batch' }
 
-target_labelmap = torch.tensor(([[0, 1],
-                                 [0, 1]]))
 
-print(pred.shape, target_labelmap.shape)
+msam = nnmodules.MSAM3D(backbone_config, attention_module_config).eval().cuda()
 
-criterion = build_loss_function('dice', device='cpu')
-dice_loss = criterion(pred.unsqueeze(dim=0), target_labelmap.unsqueeze(dim=0))
-dice_loss.backward()
-print(dice_loss)
-
-print(volumetric_dice(pred.detach().argmax(dim=1).numpy(), target_labelmap.numpy()))
-print(pred.argmax(dim=1))
+random_pet = torch.randn((1, 1, 32, 128, 128)).cuda()
+random_ct = torch.randn((1, 1, 32, 128, 128)).cuda()
+output = msam(random_pet, random_ct)

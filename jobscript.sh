@@ -16,7 +16,7 @@
 #SBATCH --time=55:00:00
 
 ## TO use the UM DKE project account
-#SBATCH --account=um_dke
+# #SBATCH --account=um_dke
 
 
 # Load CUDA 

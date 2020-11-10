@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 from datautils.preprocessing import Preprocessor
 from datasets.hecktor_unimodal_dataset import HECKTORUnimodalDataset
+from datasets.hecktor_petct_dataset import HECKTORPETCTDataset
 from datautils.patch_sampling import PatchSampler3D, PatchQueue
 from datautils.patch_aggregation import PatchAggregator3D
 import nnmodules
@@ -19,8 +20,8 @@ torch.manual_seed(0)
 torch.backends.cudnn.benchmark = False
 
 # Constants
-DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"
-DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
+DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-petct_default.yaml"
+DEFAULT_NN_CONFIG_FILE = "./config_files/nn-msam3d_default.yaml"
 DEFAULT_TRAINVAL_CONFIG_FILE = "./config_files/trainval-default.yaml"
 
 
@@ -60,14 +61,19 @@ def main(global_config):
 	
 	# Datasets
 	preprocessor = Preprocessor(**global_config['preprocessor-kwargs'])
-	train_dataset = HECKTORUnimodalDataset(**global_config['train-dataset-kwargs'], preprocessor=preprocessor)
-	val_dataset = HECKTORUnimodalDataset(**global_config['val-dataset-kwargs'], preprocessor=preprocessor)
+
+	if not global_config['trainer-kwargs']['input_data_config']['is-bimodal']:
+		train_dataset = HECKTORUnimodalDataset(**global_config['train-dataset-kwargs'], preprocessor=preprocessor)
+		val_dataset = HECKTORUnimodalDataset(**global_config['val-dataset-kwargs'], preprocessor=preprocessor)
+	else:
+		train_dataset = HECKTORPETCTDataset(**global_config['train-dataset-kwargs'], preprocessor=preprocessor)
+		val_dataset = HECKTORPETCTDataset(**global_config['val-dataset-kwargs'], preprocessor=preprocessor)
 
 	# Patch based training stuff
 	train_sampler = PatchSampler3D(**global_config['train-patch-sampler-kwargs'])
 	train_patch_queue = PatchQueue(**global_config['train-patch-queue-kwargs'], dataset=train_dataset, sampler=train_sampler)
 	train_patch_loader = DataLoader(train_patch_queue, **global_config['train-patch-loader-kwargs'])
-
+	
 	# Patch based inference stuff
 	val_sampler = PatchSampler3D(**global_config['val-patch-sampler-kwargs'])
 	val_aggregator = PatchAggregator3D(**global_config['val-patch-aggregator-kwargs'])
@@ -79,18 +85,17 @@ def main(global_config):
 	# -----------------------------------------------
 
 	if global_config['nn-name'] == "unet3d":
-		unet3d = nnmodules.UNet3D(**global_config['nn-kwargs'])
+		model = nnmodules.UNet3D(**global_config['nn-kwargs'])
 
 	elif global_config['nn-name'] == "msam3d":
-		# TODO
-		pass
-
+		model = nnmodules.MSAM3D(**global_config['nn-kwargs'])
+		
 
 	# -----------------------------------------------
 	# Training
 	# -----------------------------------------------
 
-	trainer = Trainer(unet3d,
+	trainer = Trainer(model,
 					 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
 					 **global_config['trainer-kwargs'])
 
