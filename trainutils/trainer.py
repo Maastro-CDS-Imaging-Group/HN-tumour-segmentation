@@ -13,6 +13,9 @@ from inferutils.metrics import volumetric_dice
 logging.basicConfig(level=logging.DEBUG)
 
 
+CHANNELS_DIMENSION = 1
+
+
 class Trainer():
 
     def __init__(self, 
@@ -33,7 +36,7 @@ class Trainer():
         self.val_sampler = val_sampler
         self.val_aggregator = val_aggregator
          
-        self.softmax = torch.nn.Softmax(dim=1) # Softmax along channel dimension. Used during validation. 
+        self.softmax = torch.nn.Softmax(dim=CHANNELS_DIMENSION) # Softmax along channel dimension. Used during validation. 
 
         # Config
         self.input_data_config = input_data_config
@@ -80,15 +83,23 @@ class Trainer():
             self.model = DataParallel(self.model)
 
         # Logging related
+        if self.hardware_config['enable-distributed']:    nn_name = self.model.module.nn_name
+        else:    self.model.name
+
         if self.logging_config['enable-wandb']:
             wandb.init(entity=self.logging_config['wandb-entity'],
 			           project=self.logging_config['wandb-project'],
 			           name=self.logging_config['run-name'],
 			           config=self.logging_config['wandb-config']
 			          )
+                        
             wandb.config.update({'dataset-name': self.training_config['dataset-name'],
                                  'train-subset-name': self.training_config['train-subset-name'],
                                  'val-subset-name': self.validation_config['val-subset-name'],
+                                 'is-bimodal': self.input_data_config['is-bimodal'],
+                                 'input-modality': self.input_data_config['input-modality'],
+                                 'input-representation': self.input_data_config['input-representation'],
+                                 'nn-name': nn_name,
                                  'loss-name': self.training_config['loss-name'],
                                  'batch-of-patches-size': self.validation_config['batch-of-patches-size'],
                                  'learning-rate': self.training_config['learning-rate'],
@@ -97,11 +108,14 @@ class Trainer():
                                  'num-epochs': self.start_epoch + self.training_config['num-epochs'] - 1})
             wandb.watch(self.model)
 
+
         # Log some stuff
         logging.debug("Trainer initialized")
         logging.debug(f"Train subset name: {self.training_config['train-subset-name']}")
         logging.debug(f"Validation subset name: {self.validation_config['val-subset-name']}")
-
+        logging.debug(f"Input is bimodal: {self.input_data_config['is-bimodal']}")
+        logging.debug(f"Network name: {nn_name}")
+        
 
     def run_training(self):
         """

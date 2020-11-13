@@ -3,14 +3,14 @@
 inferer-kwargs:
 
   # Hardware
-  hardware-config:
+  hardware_config:
     device: cuda
     enable-distributed: True
     
   # Inference config
-  inference-config:
-    subset-name: crossval-CHGJ-validation
-    model-filepath: ./model_checkpoints/crS-unet3d-pet_aug-cvCHGJ/unet3d_pet_e030.pt
+  inference_config:
+    subset-name: crossval-CHUM-validation
+    model-filepath: ./model_checkpoints/crS-unet3d-pet-cvCHUM/unet3d_pet_e120.pt
     compute-metrics: True
     save-results: False
     save-as-probabilities: True

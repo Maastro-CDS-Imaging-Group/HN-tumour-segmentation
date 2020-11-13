@@ -27,9 +27,6 @@ class MSAM3D(nn.Module):
         self.attention_module_config = attention_module_config
         self.backbone_config = backbone_config
 
-        # self.attention_module_device = 'cuda:0'        
-        # self.backbone_device = 'cuda:1'       
-
         # Attention module
         self.attention_module = UNet3D(**attention_module_config)
         
@@ -40,10 +37,8 @@ class MSAM3D(nn.Module):
         PET, CT = input_img
 
         # Run the attention module
-        # PET = PET.to(self.attention_module_device)
         full_scale_map = self.attention_module(PET)
         full_scale_map = relu(full_scale_map)   # Shape: (N,1,D,H,W)
-        # full_scale_map = full_scale_map.to(self.backbone_device)
         
         # Create a list of downsampled attention map
         half_scale_map = downscale_by_two(full_scale_map)
@@ -51,10 +46,6 @@ class MSAM3D(nn.Module):
         scaled_attention_maps = [full_scale_map, half_scale_map, quarter_scale_map]
 
         # Run the backbone network
-        # print(PET.device, CT.device)
-
-        # CT = CT.to(self.backbone_device)
-        # print(PET.device, CT.device)
         pred = self.backbone(CT, scaled_attention_maps)
         
         return pred

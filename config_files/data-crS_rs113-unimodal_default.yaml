@@ -40,7 +40,7 @@ preprocessor-kwargs:
       - -150
       - 150
   histogram_landmarks_path:
-    PET: "./hecktor_meta/default_small_crop/crossval_CHGJ-histogram_landmarks_PET.txt"
+    PET: "./hecktor_meta/default_small_crop/crossval_CHUM-histogram_landmarks_PET.txt"
     CT: None
 
 # --------------------------------------------------------
@@ -73,7 +73,7 @@ train-patch-sampler-kwargs:
 # Patch queue
 train-patch-queue-kwargs:
   max_length: 128
-  samples_per_volume: 32
+  samples_per_volume: 8
   num_workers: 4
   shuffle_subjects: True
   shuffle_patches: True

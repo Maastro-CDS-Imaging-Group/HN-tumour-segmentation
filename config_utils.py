@@ -5,7 +5,7 @@ from datautils.patch_sampling import get_num_valid_patches
 
 def keys2kwargs(config_dict):
     """
-    Eg: {'input-modality': 'PET'} --> {'input_modality' : 'PET'}
+    Eg: {'input-modality': 'PET'} --> {'input_modality': 'PET'}
     """
     kwargs = {}
     for key in config_dict.keys():
@@ -68,6 +68,7 @@ def build_config(cli_args, training=True):
                                      'num_workers': 0}
                                             
         val_dataset_kwargs = yaml_data_config['patient-dataset-kwargs'].copy()
+        val_dataset_kwargs['augment_data'] = False
         val_dataset_kwargs['data_dir'] = data_dir
         val_dataset_kwargs['patient_id_filepath'] = yaml_data_config['patient-id-filepath']  
         val_dataset_kwargs['mode'] = yaml_trainval_config['trainer-kwargs']['validation_config']['val-subset-name'] 
@@ -93,9 +94,10 @@ def build_config(cli_args, training=True):
     else: # For inference
 
         dataset_kwargs = yaml_data_config['patient-dataset-kwargs'].copy()
+        dataset_kwargs['augment_data'] = False
         dataset_kwargs['data_dir'] = data_dir
         dataset_kwargs['patient_id_filepath'] = yaml_data_config['patient-id-filepath']  
-        dataset_kwargs['mode'] = yaml_infer_config['inference-config']['subset-name']      
+        dataset_kwargs['mode'] = yaml_infer_config['inferer-kwargs']['inference_config']['subset-name']      
                
         patch_sampler_kwargs = yaml_data_config['val-patch-sampler-kwargs']   
         patch_sampler_kwargs['patch_size'] = yaml_data_config['patch-size']
@@ -125,10 +127,11 @@ def build_config(cli_args, training=True):
     input_data_config['is-bimodal'] = yaml_data_config['is-bimodal']
 
     if yaml_data_config['is-bimodal']: 
+        input_data_config['input-modality'] = None
         input_data_config['input-representation'] = yaml_data_config['patient-dataset-kwargs']['input_representation']
     else: 
         input_data_config['input-modality'] = yaml_data_config['patient-dataset-kwargs']['input_modality']
-
+        input_data_config['input-representation'] = None
 
     if training: # Trainer stuff
 
@@ -155,8 +158,8 @@ def build_config(cli_args, training=True):
 
     else: # Inferer stuff
 
-        hardware_config = yaml_infer_config['hardware-config']
-        inference_config = yaml_infer_config['inference-config']
+        hardware_config = yaml_infer_config['inferer-kwargs']['hardware_config']
+        inference_config = yaml_infer_config['inferer-kwargs']['inference_config']
         inference_config['dataset-name'] = yaml_data_config['dataset-name']
         inference_config['patient-id-filepath'] = yaml_data_config['patient-id-filepath']
         inference_config['batch-of-patches-size'] = yaml_data_config['batch-of-patches-size']

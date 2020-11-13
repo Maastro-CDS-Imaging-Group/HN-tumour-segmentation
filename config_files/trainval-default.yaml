@@ -10,9 +10,9 @@ trainer-kwargs:
 
   # Training config dict
   training_config:
-    train-subset-name: crossval-CHGJ-training
+    train-subset-name: crossval-CHUM-training
     loss-name: wce
-    num-epochs: 5
+    num-epochs: 120
     learning-rate: 0.0001
     use-lr-scheduler: True
     enable-checkpointing: True
@@ -24,7 +24,7 @@ trainer-kwargs:
 
   # Validation config dict
   validation_config:
-    val-subset-name: crossval-CHGJ-validation
+    val-subset-name: crossval-CHUM-validation
 
 
   # WandB logging config dict
