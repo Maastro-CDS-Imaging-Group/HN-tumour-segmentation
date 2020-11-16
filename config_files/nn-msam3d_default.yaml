@@ -4,13 +4,6 @@ nn-name: msam3d
 
 nn-kwargs:
   
-  backbone_config:  
-    in_channels: 1
-    out_channels_first_layer: 32
-    num_encoding_blocks: 4
-    residual: True
-    normalization: batch  # None or batch
-  
   attention_module_config:
     in_channels: 1
     out_channels_first_layer: 32
@@ -18,4 +11,12 @@ nn-kwargs:
     out_classes: 1
     residual: True
     normalization: batch  # None or batch
+
+  backbone_config:  
+    in_channels: 1
+    out_channels_first_layer: 32
+    num_encoding_blocks: 4
+    residual: True
+    normalization: batch  # None or batch
   
+  output_attention_map: False  # TODO Implement this feature in the MSAM3D, Trainer and Inferer 

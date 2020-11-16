@@ -1,3 +1,4 @@
+import os
 import logging
 import numpy as np
 import pandas as pd
@@ -45,6 +46,9 @@ class Inferer():
             self.patient_ids = [p_id for p_id in pf.read().split('\n') if p_id != '']
         center = self.inference_config['subset-name'].split('-')[1] 
         self.patient_ids = [p_id for p_id in self.patient_ids if center in p_id]
+
+        # Output saving stuff
+        os.makedirs(self.inference_config['output-save-dir'], exist_ok=True)
 
 
     def run_inference(self):
@@ -120,8 +124,11 @@ class Inferer():
         
         # Compute metrics, if needed
         if self.inference_config['compute-metrics']:
-            patient_pred_labelmap = (patient_pred_volume >= 0.5).long().cpu().numpy()
-            patient_dice_score = volumetric_dice(patient_pred_labelmap, patient_dict['target-labelmap'].cpu().numpy())
+            if self.inference_config['save-as-probabilities']:
+                patient_pred_labelmap = (patient_pred_volume >= 0.5).long().cpu().numpy()
+                patient_dice_score = volumetric_dice(patient_pred_labelmap, patient_dict['target-labelmap'].cpu().numpy())
+            else:
+                patient_dice_score = volumetric_dice(patient_pred_volume.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
         else:
             patient_dice_score = None
 

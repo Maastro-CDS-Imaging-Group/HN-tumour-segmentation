@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from datautils.preprocessing import Preprocessor
 from datasets.hecktor_unimodal_dataset import HECKTORUnimodalDataset
+from datasets.hecktor_petct_dataset import HECKTORPETCTDataset
 from datautils.patch_sampling import PatchSampler3D, PatchQueue
 from datautils.patch_aggregation import PatchAggregator3D
 import nnmodules
@@ -16,8 +17,8 @@ import config_utils
 
 
 # Constants
-DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_default.yaml"
-DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
+DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-petct_default.yaml"
+DEFAULT_NN_CONFIG_FILE = "./config_files/nn-msam3d_default.yaml"
 DEFAULT_INFERENCE_CONFIG_FILE = "./config_files/infer-default.yaml"
 
 
@@ -51,7 +52,12 @@ def main(global_config):
 
     # Dataset
     preprocessor = Preprocessor(**global_config['preprocessor-kwargs'])
-    dataset = HECKTORUnimodalDataset(**global_config['dataset-kwargs'], preprocessor=preprocessor)
+
+    if not global_config['inferer-kwargs']['input_data_config']['is-bimodal']:
+        dataset = HECKTORUnimodalDataset(**global_config['dataset-kwargs'], preprocessor=preprocessor)
+    else:
+        dataset = HECKTORPETCTDataset(**global_config['dataset-kwargs'], preprocessor=preprocessor)
+
 
     # Patch based inference stuff
     volume_loader = DataLoader(dataset, batch_size=1, shuffle=False)
@@ -64,19 +70,17 @@ def main(global_config):
     # -----------------------------------------------
 
     if global_config['nn-name'] == "unet3d":
-        unet3d = nnmodules.UNet3D(**global_config['nn-kwargs'])
-        #unet3d = torch.nn.DataParallel(unet3d)
+        model = nnmodules.UNet3D(**global_config['nn-kwargs'])
 
     elif global_config['nn-name'] == "msam3d":
-        # TODO
-        pass
+        model = nnmodules.MSAM3D(**global_config['nn-kwargs'])
 
 
     # -----------------------------------------------
     # Inference
     # -----------------------------------------------
 
-    inferer = Inferer(unet3d,
+    inferer = Inferer(model,
                     volume_loader, patch_sampler, patch_aggregator,
                     **global_config['inferer-kwargs'])
 

@@ -33,8 +33,8 @@ class MSAM3D(nn.Module):
         # Backbone
         self.backbone = Backbone(backbone_config)    
 
-    def forward(self, input_img):
-        PET, CT = input_img
+    def forward(self, input_patches):
+        PET, CT = input_patches
 
         # Run the attention module
         full_scale_map = self.attention_module(PET)

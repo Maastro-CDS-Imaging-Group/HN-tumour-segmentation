@@ -29,6 +29,10 @@ class Trainer():
 
         # Model
         self.model = model.to(self.device)
+
+        # Distributed training
+        if self.hardware_config['enable-distributed']:
+            self.model = DataParallel(self.model)
         
         # Data pipeline 
         self.train_patch_loader = train_patch_loader
@@ -78,10 +82,7 @@ class Trainer():
             if self.start_epoch > 1: 
                 for _ in range(last_iteration):  self.scheduler.step()
 
-        # Distributed training
-        if self.hardware_config['enable-distributed']:
-            self.model = DataParallel(self.model)
-
+        
         # Logging related
         if self.hardware_config['enable-distributed']:    nn_name = self.model.module.nn_name
         else:    self.model.name

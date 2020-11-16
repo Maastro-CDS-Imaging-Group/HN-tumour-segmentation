@@ -18,7 +18,7 @@ is-bimodal: True
 # --------------------------------------------------------
 patient-dataset-kwargs:
   input_representation: multichannel-volume
-  augment_data: True
+  augment_data: True  # Will only apply to training dataset
 
 # Note: The train/val/inference subset name is specified in trainval and infer config files
 

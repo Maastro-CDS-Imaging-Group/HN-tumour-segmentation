@@ -1,12 +1,8 @@
-x Implement and test cyclic LR scheduling
+- Add an option of outputting attention maps in MSAM3D; make changes in Trainer and Inferer 
 
-x Implement and test wCE + Dice loss
+- Simplify MSAM (maybe):
+    - Reduce out_channels_first of attention module from 32 to 16 or to 8
 
-x Implement option to save model output as foreground probabilities in inference
-x Enable compression while writing
-
-- Simplify the config system:
-    - State kwargs as they are in the config files ('_' rather than '-')
 
 - Implement validation metrics:
     x Dice and Jaccard for now. 
