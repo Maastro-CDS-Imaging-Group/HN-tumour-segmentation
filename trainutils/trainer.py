@@ -8,12 +8,17 @@ import wandb
 
 from trainutils.loss_functions import build_loss_function
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_patches_list
-from inferutils.metrics import volumetric_dice
+from evalutils.metrics import volumetric_dice
 
 logging.basicConfig(level=logging.DEBUG)
 
 
 CHANNELS_DIMENSION = 1
+
+# Cyclic lr scheduler settings
+CYCLIC_BASE_LR = 0.0002
+CYCLIC_MAX_LR = 0.0032
+N_EPOCHS_UPCYCLE = 10
 
 
 class Trainer():
@@ -33,7 +38,10 @@ class Trainer():
         # Distributed training
         if self.hardware_config['enable-distributed']:
             self.model = DataParallel(self.model)
-        
+            self.nn_name = self.model.module.nn_name
+        else:
+            self.nn_name = self.model.nn_name
+
         # Data pipeline 
         self.train_patch_loader = train_patch_loader
         self.val_volume_loader = val_volume_loader
@@ -48,7 +56,9 @@ class Trainer():
         self.validation_config = validation_config
         self.logging_config = logging_config
 
-        self.criterion = build_loss_function(training_config['loss-name'], self.device)
+        self.criterion = build_loss_function(training_config['loss-name'], 
+                                             self.training_config['dataset-name'], 
+                                             self.device)
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), 
                                           lr=self.training_config['learning-rate'])
@@ -72,8 +82,8 @@ class Trainer():
             batches_per_epoch = len(self.train_patch_loader)
 
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer, 
-                                                                base_lr=0.0001, max_lr=0.001,
-                                                                step_size_up=10 * batches_per_epoch,
+                                                                base_lr=CYCLIC_BASE_LR, max_lr=CYCLIC_MAX_LR,
+                                                                step_size_up=N_EPOCHS_UPCYCLE * batches_per_epoch,
                                                                 mode='triangular2',
                                                                 cycle_momentum=False)
 
@@ -238,8 +248,12 @@ class Trainer():
 
         # Forward pass
         self.optimizer.zero_grad()
-        pred_patches = self.model(input_patches)  # Get model predictions. These are NOT probabilities, but scores (aka logits).
-
+        # Get model predictions. These are NOT probabilities, but scores (aka logits).
+        if self.nn_name == 'msam3d':
+            pred_patches, _ = self.model(input_patches) 
+        else:
+            pred_patches= self.model(input_patches)
+        
         # Compute loss
         train_loss = self.criterion(pred_patches, target_labelmap_patches)
 
@@ -291,7 +305,10 @@ class Trainer():
                 target_labelmap_patches = torch.stack([patches_list[p+i]['target-labelmap'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).long().to(self.device)
 
                 # Forward pass
-                pred_patches = self.model(input_patches)                
+                if self.nn_name == 'msam3d':
+                    pred_patches, _ = self.model(input_patches) 
+                else:
+                    pred_patches = self.model(input_patches)               
 
                 # Compute validation loss
                 val_loss = self.criterion(pred_patches, target_labelmap_patches)

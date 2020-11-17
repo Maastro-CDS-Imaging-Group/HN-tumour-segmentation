@@ -6,9 +6,10 @@ nn-kwargs:
   
   attention_module_config:
     in_channels: 1
-    out_channels_first_layer: 32
+    out_channels_first_layer: 16  # default: 32
     num_encoding_blocks: 4
     out_classes: 1
+    upsampling_type: trilinear  # default: 'conv'
     residual: True
     normalization: batch  # None or batch
 
@@ -19,4 +20,4 @@ nn-kwargs:
     residual: True
     normalization: batch  # None or batch
   
-  output_attention_map: False  # TODO Implement this feature in the MSAM3D, Trainer and Inferer 
+  output_attention_map: True  # TODO Implement this feature in the MSAM3D, Trainer and Inferer 

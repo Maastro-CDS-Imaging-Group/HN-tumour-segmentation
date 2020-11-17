@@ -9,7 +9,7 @@ def volumetric_dice(pred_label_volume, target_label_volume):
     Returns:
         dice_score: Dice coefficient
     """
-    # Deal with cases when target labelmap has zero GTV voxels (there are 2 patients in crS - CHUM010, CHUS021)
+    # Handle cases when target labelmap has zero GTV voxels (there are 2 patients in crS - CHUM010, CHUS021)
     if 1 not in np.unique(pred_label_volume) and 1 not in np.unique(target_label_volume):
         return 0
     
@@ -21,5 +21,5 @@ def volumetric_dice(pred_label_volume, target_label_volume):
 def jaccard_index(pred_label_volume, target_label_volume):
     intersection = np.sum(pred_label_volume * target_label_volume)
     union = np.sum(np.maximum(pred_label_volume, target_label_volume))
-    iou = intersection/union
+    iou = intersection / union
     return iou 

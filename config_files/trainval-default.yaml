@@ -14,12 +14,12 @@ trainer-kwargs:
     loss-name: wce
     num-epochs: 120
     learning-rate: 0.0001
-    use-lr-scheduler: True
+    use-lr-scheduler: False
     enable-checkpointing: True
     checkpoint-step: 5
     checkpoint-root-dir: ./model_checkpoints
-    continue-from-checkpoint: True
-    load-checkpoint-filename: unet3d_petct_e015.pt 
+    continue-from-checkpoint: False
+    load-checkpoint-filename: None 
 
 
   # Validation config dict

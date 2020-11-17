@@ -9,9 +9,9 @@ inferer-kwargs:
     
   # Inference config
   inference_config:
-    subset-name: crossval-CHUS-validation
-    model-filepath: ./model_checkpoints/crS-msam3d-petct-cvCHUM/msam3d_petct_e075.pt
+    subset-name: crossval-CHUM-validation
+    model-filepath: ./model_checkpoints/crS-msam3d-petct-cvCHUM-16ch-trilin-elev_cyc/msam3d_petct_e120.pt
     compute-metrics: True
-    save-results: False
+    save-results: True
     save-as-probabilities: False
     output-save-dir: /home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113

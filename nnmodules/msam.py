@@ -20,12 +20,13 @@ class MSAM3D(nn.Module):
     unlike in the paper where it refers to only the attention module. 
     """
 
-    def __init__(self, attention_module_config, backbone_config):
+    def __init__(self, attention_module_config, backbone_config, output_attention_map=False):
         super().__init__()
 
         self.nn_name = 'msam3d'
         self.attention_module_config = attention_module_config
         self.backbone_config = backbone_config
+        self.output_attention_map = output_attention_map
 
         # Attention module
         self.attention_module = UNet3D(**attention_module_config)
@@ -40,7 +41,7 @@ class MSAM3D(nn.Module):
         full_scale_map = self.attention_module(PET)
         full_scale_map = relu(full_scale_map)   # Shape: (N,1,D,H,W)
         
-        # Create a list of downsampled attention map
+        # Create a list of downsampled versions of the attention map
         half_scale_map = downscale_by_two(full_scale_map)
         quarter_scale_map = downscale_by_two(half_scale_map)
         scaled_attention_maps = [full_scale_map, half_scale_map, quarter_scale_map]
@@ -48,7 +49,11 @@ class MSAM3D(nn.Module):
         # Run the backbone network
         pred = self.backbone(CT, scaled_attention_maps)
         
-        return pred
+        if self.output_attention_map:
+            full_scale_map = torch.cat((1-full_scale_map, full_scale_map), dim=1)  # Make the channel number to 2, so that the patch aggregator can handle this
+            return pred, full_scale_map
+        else:
+            return pred, None
 
 
 

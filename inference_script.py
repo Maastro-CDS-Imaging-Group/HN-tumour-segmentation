@@ -11,7 +11,7 @@ from datasets.hecktor_petct_dataset import HECKTORPETCTDataset
 from datautils.patch_sampling import PatchSampler3D, PatchQueue
 from datautils.patch_aggregation import PatchAggregator3D
 import nnmodules
-from inferutils.inferer import Inferer
+from evalutils.inferer import Inferer
 import config_utils
 
 

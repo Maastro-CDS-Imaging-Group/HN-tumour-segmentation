@@ -1,7 +1,8 @@
-- Add an option of outputting attention maps in MSAM3D; make changes in Trainer and Inferer 
+x Add an option of outputting attention maps in MSAM3D; make changes in Trainer and Inferer 
 
 - Simplify MSAM (maybe):
-    - Reduce out_channels_first of attention module from 32 to 16 or to 8
+    - Reduce out_channels_first of attention module from 32 to 16 or to 8 (Attention module only)
+    - Trilinear interpolation for upsampling instead of transpose conv (Attention module only)
 
 
 - Implement validation metrics:

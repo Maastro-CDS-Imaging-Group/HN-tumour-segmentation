@@ -8,7 +8,7 @@ import SimpleITK as sitk
 
 from datautils.conversion import *
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_patches_list
-from inferutils.metrics import volumetric_dice
+from evalutils.metrics import volumetric_dice
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -27,8 +27,10 @@ class Inferer():
         if self.hardware_config['enable-distributed']:
             self.model = torch.nn.DataParallel(self.model)
             self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}"))
+            self.nn_name = self.model.module.nn_name
         else:
             self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}", map_location=self.device))
+            self.nn_name = self.model.nn_name
         self.model.eval()
 
         self.softmax = torch.nn.Softmax(dim=1) # Softmax along channel dimension
@@ -48,7 +50,9 @@ class Inferer():
         self.patient_ids = [p_id for p_id in self.patient_ids if center in p_id]
 
         # Output saving stuff
-        os.makedirs(self.inference_config['output-save-dir'], exist_ok=True)
+        os.makedirs(f"{self.inference_config['output-save-dir']}/predicted", exist_ok=True)
+        if self.nn_name == 'msam3d':
+            os.makedirs(f"{self.inference_config['output-save-dir']}/attention_maps", exist_ok=True)
 
 
     def run_inference(self):
@@ -57,17 +61,23 @@ class Inferer():
         for i, patient_dict in enumerate(tqdm(self.volume_loader)):
             # Run one inference step - split patient volumes into patches, run forward pass with the patches, 
             # aggregate prediction patches into full volume labelmap and compute dice score
-            patient_pred_volume, patient_dice_score = self._inference_step(patient_dict)
+            patient_pred_volume, patient_dice_score, attention_map_volume = self._inference_step(patient_dict)
         
-            # Save the results -- pred volumes in nrrd, dice in csv 
+            # Save the results -- pred volumes in NRRD, dice in CSV, attention maps in NRRD (if enabled)
             p_id = self.patient_ids[i]
             if self.inference_config['save-results']:
-                output_nrrd_filename = f"{p_id}_ct_gtvt.nrrd"
                 pred_volume_sitk = np2sitk(patient_pred_volume, has_whd_ordering=False)
+                output_nrrd_filename = f"{p_id}_ct_gtvt.nrrd"
                 sitk.WriteImage(pred_volume_sitk, f"{self.inference_config['output-save-dir']}/predicted/{output_nrrd_filename}", True)
+           
             if self.inference_config['compute-metrics']:
                 dice_scores[p_id] = patient_dice_score
                 avg_dice += patient_dice_score
+           
+            if self.nn_name == 'msam3d' and attention_map_volume is not None:                
+                attention_map_volume_sitk = np2sitk(attention_map_volume, has_whd_ordering=False)
+                output_nrrd_filename = f"{p_id}_am.nrrd"
+                sitk.WriteImage(attention_map_volume_sitk, f"{self.inference_config['output-save-dir']}/attention_maps/{output_nrrd_filename}", True)
         
         if self.inference_config['compute-metrics']:
             avg_dice /= len(self.volume_loader)
@@ -90,6 +100,7 @@ class Inferer():
 
         # Stuff to accumulate
         patient_pred_patches_list = []
+        attention_map_patches_list = []  # Only used when enabled 
 
         with torch.no_grad(): # Disable autograd
             # Take batch_of_patches_size number of patches at a time and push through the network
@@ -112,16 +123,27 @@ class Inferer():
                     target_labelmap_patches = torch.stack([patches_list[p+i]['target-labelmap'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).long().to(self.device)
 
                 # Forward pass
-                pred_patches = self.model(input_patches)
+                if self.nn_name == 'msam3d':
+                    pred_patches, attention_map_patches = self.model(input_patches)
+                else: 
+                    pred_patches = self.model(input_patches)
                 pred_patches = self.softmax(pred_patches)
                 
                 # Convert the predicted batch of probabilities to a list of labelmap patches (or foreground probabilities), and store
                 patient_pred_patches_list.extend(get_pred_patches_list(pred_patches, as_probabilities=self.inference_config['save-as-probabilities'])) 
+                
+                if self.nn_name == 'msam3d' and attention_map_patches is not None:
+                    attention_map_patches_list.extend(get_pred_patches_list(attention_map_patches, as_probabilities=True)) 
+
 
             # Aggregate into full volume
             patient_pred_volume = self.patch_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
-            # print(patient_pred_volume)
-        
+
+            if self.nn_name == 'msam3d' and attention_map_patches is not None:
+                attention_map_volume = self.patch_aggregator.aggregate(attention_map_patches_list, device=self.device) 
+            else:
+                attention_map_volume = None
+
         # Compute metrics, if needed
         if self.inference_config['compute-metrics']:
             if self.inference_config['save-as-probabilities']:
@@ -132,4 +154,4 @@ class Inferer():
         else:
             patient_dice_score = None
 
-        return patient_pred_volume.cpu().numpy(), patient_dice_score
+        return patient_pred_volume.cpu().numpy(), patient_dice_score, attention_map_volume.cpu().numpy()
