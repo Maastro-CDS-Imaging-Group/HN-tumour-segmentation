@@ -8,7 +8,7 @@ import SimpleITK as sitk
 
 from datautils.conversion import *
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_patches_list
-from evalutils.metrics import volumetric_dice
+from evalutils.metrics import dice
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -67,7 +67,7 @@ class Inferer():
             p_id = self.patient_ids[i]
             if self.inference_config['save-results']:
                 pred_volume_sitk = np2sitk(patient_pred_volume, has_whd_ordering=False)
-                output_nrrd_filename = f"{p_id}_ct_gtvt.nrrd"
+                output_nrrd_filename = f"{p_id}_pred_gtvt.nrrd"
                 sitk.WriteImage(pred_volume_sitk, f"{self.inference_config['output-save-dir']}/predicted/{output_nrrd_filename}", True)
            
             if self.inference_config['compute-metrics']:
@@ -148,9 +148,9 @@ class Inferer():
         if self.inference_config['compute-metrics']:
             if self.inference_config['save-as-probabilities']:
                 patient_pred_labelmap = (patient_pred_volume >= 0.5).long().cpu().numpy()
-                patient_dice_score = volumetric_dice(patient_pred_labelmap, patient_dict['target-labelmap'].cpu().numpy())
+                patient_dice_score = dice(patient_pred_labelmap, patient_dict['target-labelmap'].cpu().numpy())
             else:
-                patient_dice_score = volumetric_dice(patient_pred_volume.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
+                patient_dice_score = dice(patient_pred_volume.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
         else:
             patient_dice_score = None
 

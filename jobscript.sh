@@ -3,8 +3,8 @@
 
 # Job configuration ---
 
-#SBATCH --job-name=crS-msam3d-petct-cvCHUM-16ch-trilin-no_cyc
-#SBATCH --output=slurm_job_logs/crS-msam3d-petct-cvCHUM-16ch-trilin-no_cyc.%j.log
+#SBATCH --job-name=crS-msam3d-petct-cvCHUM-simp_attn-sgd_cyc
+#SBATCH --output=slurm_job_logs/crS-msam3d-petct-cvCHUM-simp_attn-sgd_cyc.%j.log
 
 ## OpenMP settings
 #SBATCH --cpus-per-task=4
@@ -35,7 +35,7 @@ data_config_file="./config_files/data-crS_rs113-petct_default.yaml"
 nn_config_file="./config_files/nn-msam3d_default.yaml"
 trainval_config_file="./config_files/trainval-default.yaml"
 
-run_name="crS-msam3d-petct-cvCHUM-16ch-trilin-no_cyc"
+run_name="crS-msam3d-petct-cvCHUM-simp_attn-sgd_cyc"
 
 $python_interpreter $python_file --data_config_file $data_config_file \
                                  --nn_config_file $nn_config_file \

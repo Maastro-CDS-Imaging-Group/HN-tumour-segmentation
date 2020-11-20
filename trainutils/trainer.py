@@ -8,7 +8,7 @@ import wandb
 
 from trainutils.loss_functions import build_loss_function
 from datautils.patch_aggregation import PatchAggregator3D, get_pred_patches_list
-from evalutils.metrics import volumetric_dice
+from evalutils.metrics import dice
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -16,8 +16,10 @@ logging.basicConfig(level=logging.DEBUG)
 CHANNELS_DIMENSION = 1
 
 # Cyclic lr scheduler settings
-CYCLIC_BASE_LR = 0.0002
-CYCLIC_MAX_LR = 0.0032
+BASE_LR = 0.0002
+MAX_LR = 0.0016
+BASE_MOMENTUM = 0.8
+MAX_MOMENTUM = 0.9
 N_EPOCHS_UPCYCLE = 10
 
 
@@ -60,6 +62,7 @@ class Trainer():
                                              self.training_config['dataset-name'], 
                                              self.device)
 
+        # Adam optimizer, by default
         self.optimizer = torch.optim.Adam(self.model.parameters(), 
                                           lr=self.training_config['learning-rate'])
         
@@ -78,14 +81,18 @@ class Trainer():
 
         # Cyclic LR scheduler 
         if self.training_config['use-lr-scheduler']:
+            # SGD when using with Cyclic scheduler
+            self.optimizer = torch.optim.SGD(self.model.parameters(), 
+                                          lr=self.training_config['learning-rate'],
+                                          momentum=BASE_MOMENTUM)
             
             batches_per_epoch = len(self.train_patch_loader)
 
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer, 
-                                                                base_lr=CYCLIC_BASE_LR, max_lr=CYCLIC_MAX_LR,
+                                                                base_lr=BASE_LR, max_lr=MAX_LR,
                                                                 step_size_up=N_EPOCHS_UPCYCLE * batches_per_epoch,
                                                                 mode='triangular2',
-                                                                cycle_momentum=False)
+                                                                base_momentum=BASE_MOMENTUM, max_momentum=MAX_MOMENTUM)
 
             # If continuing training from checkpoint, use a dummy for loop to update the scheduler's state (hacky approach)
             last_iteration = (self.start_epoch-1) * batches_per_epoch
@@ -323,6 +330,6 @@ class Trainer():
 
             # Aggregate and compute dice
             patient_pred_labelmap = self.val_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
-            patient_dice_score = volumetric_dice(patient_pred_labelmap.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
+            patient_dice_score = dice(patient_pred_labelmap.cpu().numpy(), patient_dict['target-labelmap'].cpu().numpy())
 
         return patient_val_loss, patient_dice_score
