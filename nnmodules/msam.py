@@ -42,8 +42,8 @@ class MSAM3D(nn.Module):
         full_scale_map = relu(full_scale_map)   # Shape: (N,1,D,H,W)
         
         # Create a list of downsampled versions of the attention map
-        half_scale_map = downscale_by_two(full_scale_map)
-        quarter_scale_map = downscale_by_two(half_scale_map)
+        half_scale_map = scale_by_half(full_scale_map)
+        quarter_scale_map = scale_by_half(half_scale_map)
         scaled_attention_maps = [full_scale_map, half_scale_map, quarter_scale_map]
 
         # Run the backbone network
@@ -72,7 +72,7 @@ class Backbone(nn.Module):
         if backbone_config['residual']:
             padding = 1
 
-        # Backbone encoder
+        # Encoder
         self.encoder = Encoder(
                                 in_channels=backbone_config['in_channels'],
                                 out_channels_first=backbone_config['out_channels_first_layer'],
@@ -89,7 +89,7 @@ class Backbone(nn.Module):
                                 dropout=0,
                                 )
 
-        # Backbone bottom (last encoding block)
+        # Bottom block (last encoding block)
         self.bottom_block = EncodingBlock(
                                         in_channels=self.encoder.out_channels,
                                         out_channels_first=self.encoder.out_channels,
@@ -105,7 +105,7 @@ class Backbone(nn.Module):
                                         dropout=0,
                                     )
 
-        # Backbone decoder
+        # Decoder
         power = depth
         in_channels_skip_connection = backbone_config['out_channels_first_layer'] * 2**power
         self.decoder = Decoder(
@@ -123,7 +123,7 @@ class Backbone(nn.Module):
                                 dropout=0,
                                 )
 
-        # Backbone classifier block
+        # Classifier block
         in_channels = 2 * backbone_config['out_channels_first_layer']
         self.classifier = ConvolutionalBlock(
                                              dimensions=3, 
@@ -157,9 +157,10 @@ class Backbone(nn.Module):
 
 
 
-def downscale_by_two(input_attention_map):
+def scale_by_half(input_attention_map):
     downscaled_attention_map = interpolate(input_attention_map, 
                                            scale_factor=(0.5, 0.5, 0.5), 
                                            mode='trilinear',
-                                           align_corners=False)
+                                           align_corners=False,
+                                           recompute_scale_factor=False)
     return downscaled_attention_map

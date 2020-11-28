@@ -15,7 +15,7 @@ EPSILON = 0.0001
 
 class DiceLoss(torch.nn.Module):
   """
-  Soft Dice loss using the dice score of the foreground (GTV)
+  Soft Dice loss, using the dice score of the foreground (GTV)
 
   Args:
     pred_batch: Batch of predicted scores over patches. Tensor of shape (N,C,D,H,W)
@@ -29,7 +29,7 @@ class DiceLoss(torch.nn.Module):
   
   def forward(self, pred_batch, target_labelmap_batch):
     pred_batch = F.softmax(pred_batch, dim=CHANNELS_DIM) # Convert logits into probabilities
-    pred_foreground_batch = pred_batch[:,1,:,:,:] # Only take the foreground probabilities
+    pred_foreground_batch = pred_batch[:,1,:,:,:] # Only take the foreground probabilities. Shape (N,D,H,W)
 
     target_labelmap_batch = target_labelmap_batch.float()
 
@@ -45,10 +45,9 @@ class DiceLoss(torch.nn.Module):
     return dice_loss
 
 
-class CompositeLoss(torch.nn.Module):
+class WCEDiceCompositeLoss(torch.nn.Module):
   """
   L = L_wce + L_dice
-
   """
   def __init__(self, dataset_name, device):
     super().__init__()
@@ -77,17 +76,17 @@ def build_loss_function(loss_name, dataset_name, device):
         ce_weights = torch.Tensor( [
                                     1 - class_frequencies[0] / (class_frequencies[0] + class_frequencies[1]),
                                     1 - class_frequencies[1] / (class_frequencies[0] + class_frequencies[1])
-                                    ]
-                                  )
-
-        wce_module = torch.nn.CrossEntropyLoss(weight=ce_weights.to(device), reduction='mean')
+                                   ],
+                                  device=device
+                                 )
+        wce_module = torch.nn.CrossEntropyLoss(weight=ce_weights, reduction='mean')
         return wce_module
 
-    elif loss_name == 'dice':
+    elif loss_name == 'dice': # Soft Dice loss
       dice_loss_module = DiceLoss()
       return dice_loss_module
 
     elif loss_name == 'wce+dice': # Composite of wCE and Dice losses
-      composite_loss_module = CompositeLoss(dataset_name, device)
+      composite_loss_module = WCEDiceCompositeLoss(dataset_name, device)
       return composite_loss_module
 

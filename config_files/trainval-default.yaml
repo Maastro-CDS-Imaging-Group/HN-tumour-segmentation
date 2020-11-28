@@ -12,14 +12,14 @@ trainer-kwargs:
   training_config:
     train-subset-name: crossval-CHUM-training
     loss-name: wce+dice
-    num-epochs: 80
+    num-epochs: 120
     learning-rate: 0.0002
     use-lr-scheduler: True
     enable-checkpointing: True
     checkpoint-step: 5
     checkpoint-root-dir: ./model_checkpoints
     continue-from-checkpoint: False
-    load-checkpoint-filename: None 
+    load-checkpoint-filename: None
 
 
   # Validation config dict

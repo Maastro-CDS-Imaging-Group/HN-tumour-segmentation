@@ -13,7 +13,7 @@ from evalutils.metrics import dice
 logging.basicConfig(level=logging.DEBUG)
 
 
-CHANNELS_DIMENSION = 1
+CHANNELS_DIM = 1
 
 # Cyclic lr scheduler settings
 BASE_LR = 0.0002
@@ -50,7 +50,7 @@ class Trainer():
         self.val_sampler = val_sampler
         self.val_aggregator = val_aggregator
          
-        self.softmax = torch.nn.Softmax(dim=CHANNELS_DIMENSION) # Softmax along channel dimension. Used during validation. 
+        self.softmax = torch.nn.Softmax(dim=CHANNELS_DIM) # Softmax along channel dimension. Used during validation. 
 
         # Config
         self.input_data_config = input_data_config

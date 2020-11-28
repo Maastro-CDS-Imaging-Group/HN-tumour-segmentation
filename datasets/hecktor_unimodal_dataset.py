@@ -39,6 +39,11 @@ class HECKTORUnimodalDataset(torch.utils.data.Dataset):
 		with open(patient_id_filepath, 'r') as pf:
 			self.patient_ids = [p_id for p_id in pf.read().split('\n') if p_id != '']
 
+			# Correction for crS
+			if "crS_rs113" in self.data_dir:
+				self.patient_ids.remove("CHUM010")
+				self.patient_ids.remove("CHUS021")
+
 		self.mode = mode
 
 		# Default train-val split -- CHGJ, CHMR and CHUS for training. CHUM for validation
