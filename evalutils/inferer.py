@@ -69,15 +69,16 @@ class Inferer():
                 pred_volume_sitk = np2sitk(patient_pred_volume, has_whd_ordering=False)
                 output_nrrd_filename = f"{p_id}_pred_gtvt.nrrd"
                 sitk.WriteImage(pred_volume_sitk, f"{self.inference_config['output-save-dir']}/predicted/{output_nrrd_filename}", True)
+
+                # To save attention map, in case of MSAM3D
+                if self.nn_name == 'msam3d' and attention_map_volume is not None:                
+                    attention_map_volume_sitk = np2sitk(attention_map_volume, has_whd_ordering=False)
+                    output_nrrd_filename = f"{p_id}_am.nrrd"
+                    sitk.WriteImage(attention_map_volume_sitk, f"{self.inference_config['output-save-dir']}/attention_maps/{output_nrrd_filename}", True)
            
             if self.inference_config['compute-metrics']:
                 dice_scores[p_id] = patient_dice_score
                 avg_dice += patient_dice_score
-           
-            if self.nn_name == 'msam3d' and attention_map_volume is not None:                
-                attention_map_volume_sitk = np2sitk(attention_map_volume, has_whd_ordering=False)
-                output_nrrd_filename = f"{p_id}_am.nrrd"
-                sitk.WriteImage(attention_map_volume_sitk, f"{self.inference_config['output-save-dir']}/attention_maps/{output_nrrd_filename}", True)
         
         if self.inference_config['compute-metrics']:
             avg_dice /= len(self.volume_loader)
@@ -138,9 +139,11 @@ class Inferer():
 
             # Aggregate into full volume
             patient_pred_volume = self.patch_aggregator.aggregate(patient_pred_patches_list, device=self.device) 
+            
 
             if self.nn_name == 'msam3d' and attention_map_patches is not None:
                 attention_map_volume = self.patch_aggregator.aggregate(attention_map_patches_list, device=self.device) 
+                attention_map_volume = attention_map_volume.cpu().numpy()
             else:
                 attention_map_volume = None
 
@@ -154,4 +157,5 @@ class Inferer():
         else:
             patient_dice_score = None
 
-        return patient_pred_volume.cpu().numpy(), patient_dice_score, attention_map_volume.cpu().numpy()
+        patient_pred_volume = patient_pred_volume.cpu().numpy()
+        return patient_pred_volume, patient_dice_score, attention_map_volume

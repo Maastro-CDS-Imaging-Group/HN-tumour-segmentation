@@ -34,14 +34,14 @@ class DiceLoss(torch.nn.Module):
     target_labelmap_batch = target_labelmap_batch.float()
 
     spatial_dims = tuple(np.array(SPATIAL_DIMS) - 1)
-    batch_size = target_labelmap_batch.shape[0]
+    batch_size = target_labelmap_batch.shape[BATCHES_DIM]
     
     intersection = torch.sum(pred_foreground_batch * target_labelmap_batch, dim=spatial_dims)
     score = (2.0 * intersection + EPSILON) / \
             (torch.sum(pred_foreground_batch, dim=spatial_dims) + torch.sum(target_labelmap_batch, dim=spatial_dims) + EPSILON)
     
-    dice_loss = 1 - score.sum() / batch_size
-
+    score = score.sum() / batch_size
+    dice_loss = 1 - score
     return dice_loss
 
 

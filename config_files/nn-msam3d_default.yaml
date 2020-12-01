@@ -20,4 +20,4 @@ nn-kwargs:
     residual: True
     normalization: batch  # None or batch
   
-  output_attention_map: True  # TODO Implement this feature in the MSAM3D, Trainer and Inferer 
+  output_attention_map: False

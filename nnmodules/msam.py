@@ -50,7 +50,8 @@ class MSAM3D(nn.Module):
         pred = self.backbone(CT, scaled_attention_maps)
         
         if self.output_attention_map:
-            full_scale_map = torch.cat((1-full_scale_map, full_scale_map), dim=1)  # Make the channel number to 2, so that the patch aggregator can handle this
+            dummy = torch.zeros_like(full_scale_map)
+            full_scale_map = torch.cat((dummy, full_scale_map), dim=1)  # Make the channel number to 2, so that the inferer can aggregate this
             return pred, full_scale_map
         else:
             return pred, None

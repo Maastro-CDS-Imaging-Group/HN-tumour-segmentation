@@ -1,3 +1,12 @@
+"""
+Script to generate GTV segmentation outputs given a trained model and a validation set.
+
+    - The outputs could be either GTV foreground probability maps or binary labelmaps, depending on user's shoice
+    - Optionally, avg Dice metric can be computed
+    - Optionally, the model outputs and the metrics can be saved to disk
+
+"""
+
 import argparse
 import logging
 import numpy as np
@@ -18,7 +27,7 @@ import config_utils
 
 # Constants
 DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-petct_default.yaml"
-DEFAULT_NN_CONFIG_FILE = "./config_files/nn-msam3d_default.yaml"
+DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
 DEFAULT_INFERENCE_CONFIG_FILE = "./config_files/infer-default.yaml"
 
 
