@@ -30,12 +30,23 @@ class Trainer():
                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
                 hardware_config, input_data_config, training_config, validation_config, logging_config):
         
-        # Hardware
-        self.hardware_config = hardware_config
-        self.device = self.hardware_config['device']
+        # Data pipeline 
+        self.train_patch_loader = train_patch_loader
+        self.val_volume_loader = val_volume_loader
+        self.val_sampler = val_sampler
+        self.val_aggregator = val_aggregator
 
-        # Model
-        self.model = model.to(self.device)
+        # Config dictionaries
+        self.hardware_config = hardware_config
+        self.input_data_config = input_data_config
+        self.training_config = training_config
+        self.validation_config = validation_config
+        self.logging_config = logging_config
+        
+        # The segmentation model
+        self.model = model
+        self.device = self.hardware_config['device']
+        self.model = self.model.to(self.device)
 
         # Distributed training
         if self.hardware_config['enable-distributed']:
@@ -44,20 +55,9 @@ class Trainer():
         else:
             self.nn_name = self.model.nn_name
 
-        # Data pipeline 
-        self.train_patch_loader = train_patch_loader
-        self.val_volume_loader = val_volume_loader
-        self.val_sampler = val_sampler
-        self.val_aggregator = val_aggregator
-         
         self.softmax = torch.nn.Softmax(dim=CHANNELS_DIM) # Softmax along channel dimension. Used during validation. 
 
-        # Config
-        self.input_data_config = input_data_config
-        self.training_config = training_config
-        self.validation_config = validation_config
-        self.logging_config = logging_config
-
+        # Loss function
         self.criterion = build_loss_function(training_config['loss-name'], 
                                              self.training_config['dataset-name'], 
                                              self.device)
@@ -66,20 +66,7 @@ class Trainer():
         self.optimizer = torch.optim.Adam(self.model.parameters(), 
                                           lr=self.training_config['learning-rate'])
         
-        # Default starting epoch, when starting training from scratch
-        self.start_epoch = 1
-
-        # For saving to checkpoints 
-        self.checkpoint_dir = f"{self.training_config['checkpoint-root-dir']}/{self.logging_config['run-name']}"
-        os.makedirs(self.checkpoint_dir, exist_ok=True)
-
-        # For loading from checkpoints to continue training
-        if training_config['continue-from-checkpoint']:
-            # Checkpoint name example - unet3d_pet_e005.pt
-            self.model.load_state_dict(torch.load(f"{self.checkpoint_dir}/{training_config['load-checkpoint-filename']}"))
-            self.start_epoch = int(training_config['load-checkpoint-filename'].split('.')[0][-3:]) + 1
-
-        # Cyclic LR scheduler 
+        # If using cyclic LR scheduler 
         if self.training_config['use-lr-scheduler']:
             # SGD when using with Cyclic scheduler
             self.optimizer = torch.optim.SGD(self.model.parameters(), 
@@ -94,16 +81,28 @@ class Trainer():
                                                                 mode='triangular2',
                                                                 base_momentum=BASE_MOMENTUM, max_momentum=MAX_MOMENTUM)
 
-            # If continuing training from checkpoint, use a dummy for loop to update the scheduler's state (hacky approach)
+            # If continuing training from checkpoint, use a dummy for loop to update the scheduler's state (hacky solution)
             last_iteration = (self.start_epoch-1) * batches_per_epoch
             if self.start_epoch > 1: 
                 for _ in range(last_iteration):  self.scheduler.step()
 
-        
-        # Logging related
-        if self.hardware_config['enable-distributed']:    nn_name = self.model.module.nn_name
-        else:    self.model.name
 
+        # For saving to checkpoints 
+        self.checkpoint_dir = f"{self.training_config['checkpoint-root-dir']}/{self.logging_config['run-name']}"
+        os.makedirs(self.checkpoint_dir, exist_ok=True)
+
+        # For loading from checkpoints to continue training
+        if self.training_config['continue-from-checkpoint']:
+            # Checkpoint name example - unet3d_pet_e005.pt
+            checkpoint_dict = torch.load(f"{self.checkpoint_dir}/{self.training_config['load-checkpoint-filename']}")
+            self.model.load_state_dict(checkpoint_dict["model_state_dict"])
+            self.optimizer.load_state_dict(checkpoint_dict["optim_state_dict"])
+            self.start_epoch = int(checkpoint_dict["epoch"]) + 1
+        else:  
+            self.start_epoch = 1  # Default starting epoch, when starting training from scratch
+
+
+        # Logging related
         if self.logging_config['enable-wandb']:
             wandb.init(entity=self.logging_config['wandb-entity'],
 			           project=self.logging_config['wandb-project'],
@@ -117,7 +116,7 @@ class Trainer():
                                  'is-bimodal': self.input_data_config['is-bimodal'],
                                  'input-modality': self.input_data_config['input-modality'],
                                  'input-representation': self.input_data_config['input-representation'],
-                                 'nn-name': nn_name,
+                                 'nn-name': self.nn_name,
                                  'loss-name': self.training_config['loss-name'],
                                  'batch-of-patches-size': self.validation_config['batch-of-patches-size'],
                                  'learning-rate': self.training_config['learning-rate'],
@@ -132,8 +131,16 @@ class Trainer():
         logging.debug(f"Train subset name: {self.training_config['train-subset-name']}")
         logging.debug(f"Validation subset name: {self.validation_config['val-subset-name']}")
         logging.debug(f"Input is bimodal: {self.input_data_config['is-bimodal']}")
-        logging.debug(f"Network name: {nn_name}")
+        logging.debug(f"Network name: {self.nn_name}")
         
+
+    def _update_trainer_config(self, checkpoint_dict):
+        self.hardware_config = checkpoint_dict["hardware_config"]
+        self.input_data_config = checkpoint_dict["input_data_config"]
+        self.training_config = checkpoint_dict["training_config"]
+        self.validation_config = checkpoint_dict["validation_config"]
+        self.logging_config = checkpoint_dict["logging_config"]
+
 
     def run_training(self):
         """
@@ -224,11 +231,17 @@ class Trainer():
                         modality_str = self.input_data_config['input-modality'].lower()
 
                     # Example checkpoint name: unet3d_pet_e005.pt 
-                    if self.hardware_config['enable-distributed']:    nn_name = self.model.module.nn_name
-                    else:    nn_name = self.model.nn_name
-                    checkpoint_filename = f"{nn_name}_{modality_str}_e{str(epoch).zfill(3)}.pt"
+                    # if self.hardware_config['enable-distributed']:    nn_name = self.model.module.nn_name
+                    # else:    nn_name = self.model.nn_name
+
+                    checkpoint_dict = {"model_state_dict": self.model.state_dict(),
+                                      "optim_state_dict": self.optimizer.state_dict(),
+                                      "epoch": epoch
+                                      }
+
+                    checkpoint_filename = f"{self.nn_name}_{modality_str}_e{str(epoch).zfill(3)}.pt"
                     logging.debug(f"Saving checkpoint: {checkpoint_filename}")
-                    torch.save(self.model.state_dict(), f"{self.checkpoint_dir}/{checkpoint_filename}")
+                    torch.save(checkpoint_dict, f"{self.checkpoint_dir}/{checkpoint_filename}")
 
 
     def _train_step(self, batch_of_patches):

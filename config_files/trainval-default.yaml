@@ -18,7 +18,7 @@ trainer-kwargs:
     enable-checkpointing: True
     checkpoint-step: 5
     checkpoint-root-dir: ./model_checkpoints
-    continue-from-checkpoint: False
+    continue-from-checkpoint: false
     load-checkpoint-filename: None
 
 
