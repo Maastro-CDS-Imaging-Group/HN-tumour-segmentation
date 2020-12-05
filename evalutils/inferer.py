@@ -104,24 +104,29 @@ class Inferer():
         attention_map_patches_list = []  # Only used when enabled 
 
         with torch.no_grad(): # Disable autograd
+
             # Take batch_of_patches_size number of patches at a time and push through the network
-            for p in range(0, self.inference_config['valid-patches-per-volume'], self.inference_config['batch-of-patches-size']):
+            valid_patches_per_volume = self.inference_config['valid-patches-per-volume']
+            batch_of_patches_size = self.inference_config['batch-of-patches-size']
+            batch_of_patches_size = min(valid_patches_per_volume, batch_of_patches_size)
+
+            for p in range(0, valid_patches_per_volume, batch_of_patches_size):
 
                 # Get input patches
                 if self.input_data_config['is-bimodal']: # In case of bimodal input                    
                     if self.input_data_config['input-representation'] == 'separate-volumes': # For PET and CT as separate volumes
-                        PET_patches = torch.stack([patches_list[p+i]['PET'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
-                        CT_patches = torch.stack([patches_list[p+i]['CT'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)                        
+                        PET_patches = torch.stack([patches_list[p+i]['PET'] for i in range(batch_of_patches_size)], dim=0).to(self.device)
+                        CT_patches = torch.stack([patches_list[p+i]['CT'] for i in range(batch_of_patches_size)], dim=0).to(self.device)                        
                         input_patches = [PET_patches, CT_patches] # Pack these tensors into a list
                     if self.input_data_config['input-representation'] == 'multichannel-volume': # For PET and CT as a single 2-channel volume
-                        input_patches = torch.stack([patches_list[p+i]['PET-CT'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)                
+                        input_patches = torch.stack([patches_list[p+i]['PET-CT'] for i in range(batch_of_patches_size)], dim=0).to(self.device)                
                 else: # In case of unimodal input 
                     modality = self.input_data_config['input-modality']
-                    input_patches = torch.stack([patches_list[p+i][modality] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).to(self.device)
+                    input_patches = torch.stack([patches_list[p+i][modality] for i in range(batch_of_patches_size)], dim=0).to(self.device)
                 
                 # Get ground truth labelmap
                 if self.inference_config['compute-metrics']:
-                    target_labelmap_patches = torch.stack([patches_list[p+i]['target-labelmap'] for i in range(self.inference_config['batch-of-patches-size'])], dim=0).long().to(self.device)
+                    target_labelmap_patches = torch.stack([patches_list[p+i]['target-labelmap'] for i in range(batch_of_patches_size)], dim=0).long().to(self.device)
 
                 # Forward pass
                 if self.nn_name == 'msam3d':

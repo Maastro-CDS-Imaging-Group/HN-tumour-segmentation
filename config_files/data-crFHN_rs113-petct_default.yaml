@@ -1,15 +1,15 @@
 # --------------------------------------------------------
 # Constants
 # --------------------------------------------------------
-dataset-name: hecktor-crS_rs113
+dataset-name: hecktor-crFHN_rs113
 data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train
 
 patient-id-filepath: ./hecktor_meta/patient_IDs_train.txt
 
 volume-size: 
-  - 144
-  - 144
-  - 48
+  - 450
+  - 450
+  - 100
 
 is-bimodal: True
 
@@ -51,7 +51,7 @@ patch-size:
   - 144
   - 48
 
-batch-of-patches-size: 2
+batch-of-patches-size: 4
 
 
 # --------------------------------------------------------
@@ -61,9 +61,9 @@ batch-of-patches-size: 2
 # Patch sampler
 train-patch-sampler-kwargs:
   focal_point_stride:
-    - 1
-    - 1
-    - 1
+    - 4
+    - 4
+    - 4
   sampling: strided-random
   padding:
     - 0
@@ -72,8 +72,8 @@ train-patch-sampler-kwargs:
 
 # Patch queue
 train-patch-queue-kwargs:
-  max_length: 32
-  samples_per_volume: 1
+  max_length: 128
+  samples_per_volume: 8
   num_workers: 4
   shuffle_subjects: True
   shuffle_patches: True
@@ -89,24 +89,24 @@ train-patch-queue-kwargs:
 # Patch sampler
 val-patch-sampler-kwargs:
   focal_point_stride:
-    - 1
-    - 1
-    - 1
+    - 140
+    - 140
+    - 44
   sampling: sequential
   padding:
-    - 0
-    - 0
-    - 0
+    - 114
+    - 114
+    - 36
 
 # Patch aggregator 
 val-patch-aggregator-kwargs:
   focal_point_stride:
-    - 1
-    - 1
-    - 1
+    - 140
+    - 140
+    - 44
   overlap_handling: union
   unpadding:
-    - 0
-    - 0
-    - 0
+    - 114
+    - 114
+    - 36
 

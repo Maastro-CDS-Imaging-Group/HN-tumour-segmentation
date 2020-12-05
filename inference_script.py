@@ -27,7 +27,7 @@ import config_utils
 
 # Constants
 DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-petct_default.yaml"
-DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_default.yaml"
+DEFAULT_NN_CONFIG_FILE = "./config_files/nn-msam3d_default.yaml"
 DEFAULT_INFERENCE_CONFIG_FILE = "./config_files/infer-default.yaml"
 
 

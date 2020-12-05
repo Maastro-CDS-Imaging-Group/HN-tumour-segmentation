@@ -20,7 +20,7 @@ BASE_LR = 0.0002
 MAX_LR = 0.0016
 BASE_MOMENTUM = 0.8
 MAX_MOMENTUM = 0.9
-N_EPOCHS_UPCYCLE = 8
+N_EPOCHS_UPCYCLE = 10
 
 
 class Trainer():
@@ -307,23 +307,27 @@ class Trainer():
 
         with torch.no_grad(): # Disable autograd
             # Take batch_of_patches_size number of patches at a time and push through the network
-            for p in range(0, self.validation_config['valid-patches-per-volume'], self.validation_config['batch-of-patches-size']):
+            valid_patches_per_volume = self.validation_config['valid-patches-per-volume']
+            batch_of_patches_size = self.validation_config['batch-of-patches-size']
+            batch_of_patches_size = min(valid_patches_per_volume, batch_of_patches_size)
+            
+            for p in range(0, valid_patches_per_volume, batch_of_patches_size):
 
                 # Get input patches
                 if self.input_data_config['is-bimodal']: # In case of bimodal input                   
                     if self.input_data_config['input-representation'] == 'separate-volumes':  # For PET and CT as separate volumes
-                        PET_patches = torch.stack([patches_list[p+i]['PET'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)
-                        CT_patches = torch.stack([patches_list[p+i]['CT'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)
+                        PET_patches = torch.stack([patches_list[p+i]['PET'] for i in range(batch_of_patches_size)], dim=0).to(self.device)
+                        CT_patches = torch.stack([patches_list[p+i]['CT'] for i in range(batch_of_patches_size)], dim=0).to(self.device)
                         # Pack these tensors into a list
                         input_patches = [PET_patches, CT_patches]                    
                     if self.input_data_config['input-representation'] == 'multichannel-volume': # For PET and CT as a single 2-channel volume
-                        input_patches = torch.stack([patches_list[p+i]['PET-CT'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)                
+                        input_patches = torch.stack([patches_list[p+i]['PET-CT'] for i in range(batch_of_patches_size)], dim=0).to(self.device)                
                 else: # In case of unimodal input
                     modality = self.input_data_config['input-modality']
-                    input_patches = torch.stack([patches_list[p+i][modality] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).to(self.device)
+                    input_patches = torch.stack([patches_list[p+i][modality] for i in range(batch_of_patches_size)], dim=0).to(self.device)
                 
                 # Get ground truth labelmap
-                target_labelmap_patches = torch.stack([patches_list[p+i]['target-labelmap'] for i in range(self.validation_config['batch-of-patches-size'])], dim=0).long().to(self.device)
+                target_labelmap_patches = torch.stack([patches_list[p+i]['target-labelmap'] for i in range(batch_of_patches_size)], dim=0).long().to(self.device)
 
                 # Forward pass
                 if self.nn_name == 'msam3d':
