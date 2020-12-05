@@ -55,6 +55,18 @@ class Trainer():
         else:
             self.nn_name = self.model.nn_name
 
+
+        # For loading from checkpoints to continue training
+        if self.training_config['continue-from-checkpoint']:
+            # Checkpoint name example - unet3d_pet_e005.pt
+            checkpoint_dict = torch.load(f"{self.checkpoint_dir}/{self.training_config['load-checkpoint-filename']}")
+            self.model.load_state_dict(checkpoint_dict["model_state_dict"])
+            self.optimizer.load_state_dict(checkpoint_dict["optim_state_dict"])
+            self.start_epoch = int(checkpoint_dict["epoch"]) + 1
+        else:  
+            self.start_epoch = 1  # Default starting epoch, when starting training from scratch
+
+
         self.softmax = torch.nn.Softmax(dim=CHANNELS_DIM) # Softmax along channel dimension. Used during validation. 
 
         # Loss function
@@ -90,17 +102,6 @@ class Trainer():
         # For saving to checkpoints 
         self.checkpoint_dir = f"{self.training_config['checkpoint-root-dir']}/{self.logging_config['run-name']}"
         os.makedirs(self.checkpoint_dir, exist_ok=True)
-
-        # For loading from checkpoints to continue training
-        if self.training_config['continue-from-checkpoint']:
-            # Checkpoint name example - unet3d_pet_e005.pt
-            checkpoint_dict = torch.load(f"{self.checkpoint_dir}/{self.training_config['load-checkpoint-filename']}")
-            self.model.load_state_dict(checkpoint_dict["model_state_dict"])
-            self.optimizer.load_state_dict(checkpoint_dict["optim_state_dict"])
-            self.start_epoch = int(checkpoint_dict["epoch"]) + 1
-        else:  
-            self.start_epoch = 1  # Default starting epoch, when starting training from scratch
-
 
         # Logging related
         if self.logging_config['enable-wandb']:
