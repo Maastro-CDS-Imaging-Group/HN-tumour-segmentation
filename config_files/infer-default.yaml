@@ -10,7 +10,7 @@ inferer-kwargs:
   # Inference config
   inference_config:
     subset-name: crossval-CHUM-validation
-    model-filepath: ./model_checkpoints/crS-msam3d-petct-cvCHUM-simp_attn-comploss-sgd_cyc-corr_data/msam3d_petct_e110.pt
+    model-filepath: ./model_checkpoints/crS-msam3d-pet-cvCHUM-comploss-sgd_cyc-corr_data-2/msam3d_petct_e200.pt
     compute-metrics: True
     save-results: True
     save-as-probabilities: False

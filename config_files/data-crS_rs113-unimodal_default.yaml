@@ -47,9 +47,9 @@ preprocessor-kwargs:
 # Patch settings
 # --------------------------------------------------------
 patch-size: 
-  - 128
-  - 128
-  - 32
+  - 144
+  - 144
+  - 48
 
 batch-of-patches-size: 4
 
@@ -61,9 +61,9 @@ batch-of-patches-size: 4
 # Patch sampler
 train-patch-sampler-kwargs:
   focal_point_stride:
-    - 4
-    - 4
-    - 4
+    - 1
+    - 1
+    - 1
   sampling: strided-random
   padding:
     - 0
@@ -72,8 +72,8 @@ train-patch-sampler-kwargs:
 
 # Patch queue
 train-patch-queue-kwargs:
-  max_length: 128
-  samples_per_volume: 8
+  max_length: 32
+  samples_per_volume: 1
   num_workers: 4
   shuffle_subjects: True
   shuffle_patches: True
@@ -82,31 +82,27 @@ train-patch-queue-kwargs:
 # --------------------------------------------------------
 # Validation/inference pipeline settings
 # --------------------------------------------------------
-# Focal point stride and padding combinations to result in 8 patches:
-#  (10,10,10) and (0,0,0)
-#  (60,60,20) and (44,44,4)
 
 # Patch sampler
 val-patch-sampler-kwargs:
   focal_point_stride:
-    - 60
-    - 60
-    - 20
+    - 1
+    - 1
+    - 1
   sampling: sequential
   padding:
-    - 44
-    - 44
-    - 4
+    - 0
+    - 0
+    - 0
 
 # Patch aggregator 
 val-patch-aggregator-kwargs:
   focal_point_stride:
-    - 60
-    - 60
-    - 20
+    - 1
+    - 1
+    - 1
   overlap_handling: union
   unpadding:
-    - 44
-    - 44
-    - 4
-
+    - 0
+    - 0
+    - 0

@@ -26,10 +26,14 @@ class Inferer():
         self.model = model.to(self.device)
         if self.hardware_config['enable-distributed']:
             self.model = torch.nn.DataParallel(self.model)
-            self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}"))
+            checkpoint_dict = torch.load(f"{inference_config['model-filepath']}")
+            model_state_dict = checkpoint_dict['model_state_dict']
+            self.model.load_state_dict(model_state_dict)
             self.nn_name = self.model.module.nn_name
         else:
-            self.model.load_state_dict(torch.load(f"{inference_config['model-filepath']}", map_location=self.device))
+            checkpoint_dict = torch.load(f"{inference_config['model-filepath']}", map_location=self.device)
+            model_state_dict = checkpoint_dict['model_state_dict']
+            self.model.load_state_dict(model_state_dict)
             self.nn_name = self.model.nn_name
         self.model.eval()
 

@@ -1,15 +1,15 @@
 # --------------------------------------------------------
 # Constants
 # --------------------------------------------------------
-dataset-name: hecktor-crFHN_rs113
+dataset-name: hecktor-crS_rs113
 data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train
 
 patient-id-filepath: ./hecktor_meta/patient_IDs_train.txt
 
 volume-size: 
-  - 450
-  - 450
-  - 100
+  - 144
+  - 144
+  - 48
 
 is-bimodal: True
 
@@ -51,7 +51,7 @@ patch-size:
   - 144
   - 48
 
-batch-of-patches-size: 4
+batch-of-patches-size: 2
 
 
 # --------------------------------------------------------
@@ -61,10 +61,10 @@ batch-of-patches-size: 4
 # Patch sampler
 train-patch-sampler-kwargs:
   focal_point_stride:
-    - 4
-    - 4
-    - 4
-  sampling: strided-random # TODO: Change this 
+    - 1
+    - 1
+    - 1
+  sampling: strided-random
   padding:
     - 0
     - 0
@@ -72,8 +72,8 @@ train-patch-sampler-kwargs:
 
 # Patch queue
 train-patch-queue-kwargs:
-  max_length: 128
-  samples_per_volume: 8
+  max_length: 32
+  samples_per_volume: 1
   num_workers: 4
   shuffle_subjects: True
   shuffle_patches: True
@@ -82,30 +82,28 @@ train-patch-queue-kwargs:
 # --------------------------------------------------------
 # Validation/inference pipeline settings
 # --------------------------------------------------------
-# Focal point stride and padding combinations
-#  (140,140,44) stride and (114,114,36) padding -->  48 patches per volume
 
 # Patch sampler
 val-patch-sampler-kwargs:
   focal_point_stride:
-    - 140
-    - 140
-    - 44
+    - 1
+    - 1
+    - 1
   sampling: sequential
   padding:
-    - 114
-    - 114
-    - 36
+    - 0
+    - 0
+    - 0
 
 # Patch aggregator 
 val-patch-aggregator-kwargs:
   focal_point_stride:
-    - 140
-    - 140
-    - 44
+    - 1
+    - 1
+    - 1
   overlap_handling: union
   unpadding:
-    - 114
-    - 114
-    - 36
+    - 0
+    - 0
+    - 0
 

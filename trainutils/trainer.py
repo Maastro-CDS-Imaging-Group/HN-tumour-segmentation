@@ -26,9 +26,9 @@ N_EPOCHS_UPCYCLE = 10
 class Trainer():
 
     def __init__(self, 
-                model,
-                train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
-                hardware_config, input_data_config, training_config, validation_config, logging_config):
+                 model,
+                 train_patch_loader, val_volume_loader, val_sampler, val_aggregator,
+                 hardware_config, input_data_config, training_config, validation_config, logging_config):
         
         # Data pipeline 
         self.train_patch_loader = train_patch_loader
