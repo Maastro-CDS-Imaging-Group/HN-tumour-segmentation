@@ -182,7 +182,7 @@ class Trainer():
                                'batch-counter': batch_counter,
                                'epoch': epoch})
                 batch_counter += 1
-                
+                break
             epoch_train_loss /= len(self.train_patch_loader)
 
             # Clear CUDA cache

@@ -18,7 +18,7 @@ is-bimodal: True
 # --------------------------------------------------------
 patient-dataset-kwargs:
   input_representation: separate-volumes
-  augment_data: True  # Will only apply to training dataset
+  augment_data: False  # Will only apply to training dataset
 
 # Note: The train/val/inference subset name is specified in trainval and infer config files
 
@@ -51,7 +51,7 @@ patch-size:
   - 144
   - 48
 
-batch-of-patches-size: 4
+batch-of-patches-size: 2
 
 
 # --------------------------------------------------------
@@ -61,10 +61,10 @@ batch-of-patches-size: 4
 # Patch sampler
 train-patch-sampler-kwargs:
   focal_point_stride:
-    - 4
-    - 4
-    - 4
-  sampling: strided-random # TODO: Change this 
+    - 1
+    - 1
+    - 1
+  sampling: pet-weighted-random
   padding:
     - 0
     - 0

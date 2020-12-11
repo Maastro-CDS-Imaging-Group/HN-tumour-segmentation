@@ -13,7 +13,7 @@ class PatchSampler3D():
     """
     Samples 3D patches of specified size using the specified sampling method.
     """
-    def __init__(self, patch_size, volume_size, sampling, focal_point_stride, padding):
+    def __init__(self, patch_size, volume_size=[144,144,48], sampling='random', focal_point_stride=[1,1,1], padding=[0,0,0]):
         self.patch_size = list(patch_size) # Specified in (W,H,D) order
         self.patch_size.reverse()    # Convert to (D,H,W) order
 
@@ -33,7 +33,7 @@ class PatchSampler3D():
 
     def get_samples(self, subject_dict, num_patches):
         # Sample valid focal points
-        focal_points = self._sample_valid_focal_points(num_patches)
+        focal_points = self._sample_valid_focal_points(num_patches, subject_dict)
 
         # Extract patches from the subject volumes
         patch_size = np.array(self.patch_size)
@@ -58,6 +58,7 @@ class PatchSampler3D():
                     patch[key] = volume[z1:z2, y1:y2, x1:x2]
 
                 patch[key] = torch.from_numpy(patch[key])
+                # print(key, patch[key].shape)
                 #subject_dict[key] = torch.from_numpy(subject_dict[key])
 
             patches_list.append(patch)
@@ -65,7 +66,7 @@ class PatchSampler3D():
         return patches_list
 
 
-    def _sample_valid_focal_points(self, num_patches):
+    def _sample_valid_focal_points(self, num_patches, subject_dict):
         # Use the labelmap to determine volume shape
         #volume_shape = subject_dict['target-labelmap'].shape # (D,H,W)
         patch_size = np.array(self.patch_size).astype(np.float)
@@ -85,7 +86,9 @@ class PatchSampler3D():
             focal_points = [(zs[i], ys[i], xs[i]) for i in range(num_patches)]
 
         elif self.sampling == 'sequential':
-            # Sequental sampling, used during inference
+            '''
+            Sequental sampling, used during inference
+            '''
             # Note: arange() takes exlusive range
             z_range = np.arange(valid_indx_range[0][0], valid_indx_range[1][0] + 1, self.focal_point_stride[0]).astype(np.int)
             y_range = np.arange(valid_indx_range[0][1], valid_indx_range[1][1] + 1, self.focal_point_stride[1]).astype(np.int)
@@ -94,12 +97,10 @@ class PatchSampler3D():
             zs, ys, xs = zs.flatten(), ys.flatten(), xs.flatten()
             focal_points = [(zs[i], ys[i], xs[i]) for i in range(num_patches)]
 
-            # print(z_range)
-            # print(y_range)
-            # print(x_range)
-
         elif self.sampling == 'strided-random':
-            # Unofrm random sampling over spare valid focal points
+            '''
+            Uniform random sampling over spare valid focal points
+            '''
             z_range = np.arange(valid_indx_range[0][0], valid_indx_range[1][0] + 1, self.focal_point_stride[0]).astype(np.int)
             y_range = np.arange(valid_indx_range[0][1], valid_indx_range[1][1] + 1, self.focal_point_stride[1]).astype(np.int)
             x_range = np.arange(valid_indx_range[0][2], valid_indx_range[1][2] + 1, self.focal_point_stride[2]).astype(np.int)
@@ -109,16 +110,72 @@ class PatchSampler3D():
             random_indxs = np.random.choice(len(focal_points), size=num_patches, replace=False)
             focal_points = [focal_points[i] for i in random_indxs]
 
-        elif self.sampling == 'ct-foreground-random':
-            # Random sampling from the CT foreground (any value >0)
-            # TODO
-            pass
+        elif self.sampling == 'pet-weighted-random':
+            '''
+            Random sampling, biased to high SUV regions in PET
+            '''
+            # Get the PET
+            PET_volume = subject_dict['PET'][0].clone().detach().numpy()
+            intensity_threshold = 0.1 # [0,1] range.
+            PET_volume[PET_volume < intensity_threshold] = 0 # Zero down small values
 
-        elif self.sampling == 'gtv-biased-random':
-            # Random sampling with higher probability for GTV focal points
-            # TODO
-            pass
+            # Compose the sampling probability map
+            sampling_prob_map = PET_volume.copy()
+            # print(sampling_prob_map.max())
+            # Normalize to form a true probability distribution
+            sampling_prob_map = sampling_prob_map / np.sum(sampling_prob_map)
 
+            # Sample focal points using this probability map
+            focal_points = self._sample_from_probability_map(num_patches, sampling_prob_map, valid_indx_range)
+
+        elif self.sampling == 'gtv-petfg-weighted-random':
+            '''
+            Random sampling from PET foreground, biased to patches containing GTV
+            '''
+            # Get the PET foreground
+            PET_volume = subject_dict['PET'][0].clone().detach().numpy()
+            intensity_threshold = 0.1 # [0,1] range
+            PET_volume = (PET_volume > intensity_threshold).astype(np.float32) # Apply threshold to get foreground
+
+            # Get the GTV labelmap and create a high-probability zone around it
+            gtv_labelmap = subject_dict['target-labelmap'].clone().detach().numpy()
+            gtv_centre_of_mass = np.argwhere(gtv_labelmap == 1).mean(axis=0)
+            comz, comy, comx = tuple(gtv_centre_of_mass.astype(int))
+            high_prob_zone_map = gtv_labelmap.copy()
+            high_prob_zone_map[comz - math.ceil(patch_size[0]/2) : comz + math.floor(patch_size[0]/2),
+                               comy - math.ceil(patch_size[1]/2) : comy + math.floor(patch_size[1]/2),
+                               comx - math.ceil(patch_size[2]/2) : comx + math.floor(patch_size[2]/2)] = 1
+
+            # Compose the sampling probability map
+            sampling_prob_map = np.zeros_like(gtv_labelmap)
+            sampling_prob_map = PET_volume + 5 * high_prob_zone_map
+
+            # Normalize to form a true probability distribution
+            sampling_prob_map = sampling_prob_map / np.sum(sampling_prob_map)
+
+            # Sample focal points using this probability map
+            focal_points = self._sample_from_probability_map(num_patches, sampling_prob_map, valid_indx_range)
+
+        return focal_points
+
+
+    def _sample_from_probability_map(self, num_patches, sampling_prob_map, valid_indx_range):
+        relevant_coords = np.argwhere(sampling_prob_map > 0)
+        distribution = sampling_prob_map[sampling_prob_map > 0].flatten()
+
+        patch_counter = 0
+        sampled_indxs = []
+        while patch_counter < num_patches:
+            sample = np.random.choice(len(relevant_coords), size=1, p=distribution)[0]
+            sample_coord = relevant_coords[sample]
+            # Filter out invalid samples
+            if sample_coord[0] > valid_indx_range[0][0] and sample_coord[0] < valid_indx_range[1][0] \
+            and  sample_coord[1] > valid_indx_range[0][1] and sample_coord[1] < valid_indx_range[1][1] \
+            and sample_coord[2] > valid_indx_range[0][2] and sample_coord[2] < valid_indx_range[1][2]:
+                sampled_indxs.append(sample)
+                patch_counter += 1
+
+        focal_points = [tuple(relevant_coords[i]) for i in sampled_indxs]
         return focal_points
 
 
@@ -225,6 +282,7 @@ class PatchQueue(Dataset):
             self.fill_queue()
 
         sample_dict = self.patches_list.pop()
+        # print(type(sample_dict))
         return sample_dict
 
 
@@ -264,6 +322,7 @@ class PatchQueue(Dataset):
                                     )
         # print("subjects loader length:", len(subjects_loader))
         return iter(subjects_loader)
+
 
 
 def get_num_valid_patches(patch_size, volume_size=[450,450,100], focal_point_stride=[1,1,1], padding=[0,0,0]):

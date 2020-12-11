@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 CLASS_FREQUENCIES = {'hecktor-crS_rs113': {0: 199156267, 1: 904661},
-                     'hecktor-crFHN_rs113': None
+                     'hecktor-crFHN_rs113': {0: 4069313577, 1: 936423}
                      } 
 
 BATCHES_DIM = 0
