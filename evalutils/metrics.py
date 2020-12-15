@@ -17,10 +17,10 @@ def dice(pred_label_volume, target_label_volume):
     """
     intersection = np.sum(pred_label_volume * target_label_volume)
     dice_score = (2 * intersection + EPSILON) / (np.sum(pred_label_volume) + np.sum(target_label_volume) + EPSILON)
-    return dice_score
+    return round(dice_score, 5)
 
 
-def jaccard(pred_label_volume, target_label_volume):
+def jaccard(pred_label_volume, target_label_volume, return_i_and_u=False):
     """
     Jaccard Coefficient (JC) or IoU
     Args
@@ -29,18 +29,25 @@ def jaccard(pred_label_volume, target_label_volume):
     Returns:
         iou: Intersection-over-Union
     """
-    intersection = np.sum(pred_label_volume * target_label_volume)
-    union = np.sum(np.maximum(pred_label_volume, target_label_volume))
+    intersection = np.sum(pred_label_volume * target_label_volume).astype(float)
+    union = np.sum(np.maximum(pred_label_volume, target_label_volume)).astype(float)
     iou = (intersection + EPSILON) / (union + EPSILON)
-    return iou 
+    if return_i_and_u:
+        return round(iou, 5), intersection, union    
+    else:
+        return round(iou, 5) 
 
 
-def hausdorff_distance(pred_label_volume, target_label_volume, dim_ordering='dhw'):
+def hausdorff(pred_label_volume, target_label_volume, dim_ordering='whd'):
     """
     Hausdorff Distance (HD) -- full version
     """
     # TODO Benchmark and compare Medpy's implementation with Deepmind's
     if dim_ordering == 'whd':    spacing = (1,1,3)
     elif dim_ordering == 'dhw':    spacing = (3,1,1)
+
+    if 1 not in np.unique(pred_label_volume.astype(np.int8)):
+        return 99999
+
     hausdorff = hd(pred_label_volume, target_label_volume, voxelspacing=spacing, connectivity=1)
-    return hausdorff
+    return round(hausdorff, 5)

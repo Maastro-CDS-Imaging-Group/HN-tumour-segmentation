@@ -50,8 +50,13 @@ class Inferer():
 
         with open(self.inference_config['patient-id-filepath'], 'r') as pf:
             self.patient_ids = [p_id for p_id in pf.read().split('\n') if p_id != '']
-        center = self.inference_config['subset-name'].split('-')[1] 
-        self.patient_ids = [p_id for p_id in self.patient_ids if center in p_id]
+        centre = self.inference_config['subset-name'].split('-')[1] 
+        self.patient_ids = [p_id for p_id in self.patient_ids if centre in p_id]
+        
+        # Correction for crS data. Comment, if not using crS 
+        if centre == 'CHUM':    self.patient_ids.remove("CHUM010")
+        if centre == 'CHUS':    self.patient_ids.remove("CHUS021")
+
 
         # Output saving stuff
         os.makedirs(f"{self.inference_config['output-save-dir']}/predicted", exist_ok=True)
@@ -60,6 +65,8 @@ class Inferer():
 
 
     def run_inference(self):
+        logging.debug(f"Running inference on: {self.inference_config['subset-name']}")
+        
         dice_scores = {}
         avg_dice = 0
         for i, patient_dict in enumerate(tqdm(self.volume_loader)):

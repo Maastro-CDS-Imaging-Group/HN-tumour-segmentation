@@ -59,7 +59,7 @@ class HECKTORPETCTDataset(torch.utils.data.Dataset):
 				self.patient_ids = [p_id for p_id in self.patient_ids if val_centre not in p_id]
 			elif 'validation' in self.mode:
 				self.patient_ids = [p_id for p_id in self.patient_ids if val_centre in p_id]
-
+		# print("[dataset]", self.patient_ids)
 		self.input_representation = input_representation
 
 		self.spacing_dict = {'xy-spacing': 1.0, 'slice-thickness': 3.0}
@@ -129,7 +129,7 @@ class HECKTORPETCTDataset(torch.utils.data.Dataset):
 			sample_dict = {'PET-CT': torch.stack([PET_tnsr, CT_tnsr], dim=0),
 	                       'target-labelmap': torch.from_numpy(target_labelmap_np).permute(2,1,0)
 						  }
-
+		# print("[dataset]", p_id)
 		return sample_dict
 
 

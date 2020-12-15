@@ -26,8 +26,8 @@ import config_utils
 
 
 # Constants
-DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crFHN_rs113-petct_default.yaml"
-DEFAULT_NN_CONFIG_FILE = "./config_files/nn-msam3d_default.yaml"
+DEFAULT_DATA_CONFIG_FILE = "./config_files/data-crS_rs113-unimodal_ct.yaml"
+DEFAULT_NN_CONFIG_FILE = "./config_files/nn-unet3d_unimodal.yaml"
 DEFAULT_INFERENCE_CONFIG_FILE = "./config_files/infer-default.yaml"
 
 
@@ -70,6 +70,7 @@ def main(global_config):
 
     # Patch based inference stuff
     volume_loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    # print(len(volume_loader))
     patch_sampler = PatchSampler3D(**global_config['patch-sampler-kwargs'])
     patch_aggregator = PatchAggregator3D(**global_config['patch-aggregator-kwargs'])
       

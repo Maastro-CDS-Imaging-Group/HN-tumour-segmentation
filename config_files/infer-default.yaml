@@ -9,9 +9,9 @@ inferer-kwargs:
     
   # Inference config
   inference_config:
-    subset-name: crossval-CHUM-validation
-    model-filepath: ./model_checkpoints/crS-msam3d-pet-cvCHUM-comploss-sgd_cyc-corr_data-2/msam3d_petct_e200.pt
+    subset-name: crossval-CHMR-validation
+    model-filepath: ../../saved_models/hecktor-crS_rs113/unet3d_ct/crossval-CHMR/unet3d_ct_e250.pt
     compute-metrics: True
     save-results: True
-    save-as-probabilities: False
-    output-save-dir: /home/zk315372/Chinmay/hn_experiment_results/hecktor-crS_rs113
+    save-as-probabilities: True
+    output-save-dir: /home/zk315372/Chinmay/model_predictions/hecktor-crS_rs113/unet3d_ct/crossval-CHMR/
