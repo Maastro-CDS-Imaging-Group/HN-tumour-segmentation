@@ -1,0 +1,30 @@
+Dataset code: hecktor-crS_rs113
+
+Model details:
+    Network architecture: msam3d
+    Trainable parameters: xyz
+    Average inference time: xyz
+    Hardware used: xyz
+
+Per centre metrics:
+  CHGJ:
+    Dice: 0
+    Jaccard: 0
+  CHMR:
+    Dice: 0
+    Jaccard: 0
+  CHUM:
+    Dice: 0
+    Jaccard: 0
+  CHUS:
+    Dice: 0
+    Jaccard: 0
+
+Global metrics:
+    Average Dice: 0
+    Average Jaccard: 0
+    SPP:
+        alpha: 0
+        beta: 0
+        Performance mean: 0
+        Performance standard deviation: 0   

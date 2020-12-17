@@ -1,0 +1,24 @@
+Data:
+  Dataset Code: hecktor-crS_rs113
+Model:
+  Network Architecture: msam3d
+  Model Input: petct
+Centre Wise Metrics:
+  Centre Wise Dice:
+    CHGJ: 0.73633
+    CHMR: 0.45935
+    CHUM: 0.62363
+    CHUS: 0.65784
+  Centre Wise Jaccard:
+    CHGJ: 0.62885
+    CHMR: 0.36538
+    CHUM: 0.52319
+    CHUS: 0.53959
+Global Metrics:
+  Global Average Dice: 0.65212
+  Global Average Jaccard: 0.54397
+  SPP:
+    alpha: 1.2340141978022188
+    beta: 1.0342978467667652
+    performance-mean: 0.5440231209620462
+    performance-stddev: 0.27549792516034877

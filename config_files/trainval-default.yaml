@@ -16,7 +16,7 @@ trainer-kwargs:
     learning-rate: 0.0002
     use-lr-scheduler: True
     enable-checkpointing: True
-    checkpoint-step: 25
+    checkpoint-step: 5
     checkpoint-root-dir: ./model_checkpoints
     continue-from-checkpoint: false
     load-checkpoint-filename: None

@@ -23,7 +23,7 @@ class SPP():
         self.n_iterations = 100
 
     
-    def estimate_performance(self, patient_jaccard_dict):
+    def estimate_performance(self, patient_volume_overlap_dict):
         '''
         Estimate alpha and beta
         '''
@@ -31,9 +31,9 @@ class SPP():
         intersections_list = []
         unions_list = []
         for p_id in self.patient_ids:
-            perf_list.append(patient_jaccard_dict[p_id][0])
-            intersections_list.append(patient_jaccard_dict[p_id][1])
-            unions_list.append(patient_jaccard_dict[p_id][2])
+            perf_list.append(patient_volume_overlap_dict[p_id][1])
+            intersections_list.append(patient_volume_overlap_dict[p_id][2])
+            unions_list.append(patient_volume_overlap_dict[p_id][3])
             
         # Estimation loop
         alpha = 1  # Initial values
@@ -61,7 +61,12 @@ class SPP():
         
         perf_mean = alpha / (alpha + beta)
         perf_stddev = math.sqrt(alpha*beta / ((alpha+beta)**2 * (alpha+beta+1)))
-        return round(self.alpha, 5), round(self.beta, 5), round(perf_mean, 5), round(perf_stddev, 5)
+
+        perf_distribution_info = {'alpha': float(self.alpha),
+                                  'beta': float(self.beta),
+                                  'performance-mean': float(perf_mean),
+                                  'performance-stddev': float(perf_stddev)}
+        return perf_distribution_info
 
 
     def plot_performance(self):

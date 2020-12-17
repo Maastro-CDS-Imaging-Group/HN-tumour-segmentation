@@ -18,7 +18,7 @@ is-bimodal: True
 # --------------------------------------------------------
 patient-dataset-kwargs:
   input_representation: separate-volumes
-  augment_data: False  # Will only apply to training dataset
+  augment_data: True  # Will only apply to training dataset
 
 # Note: The train/val/inference subset name is specified in trainval and infer config files
 
@@ -72,7 +72,7 @@ train-patch-sampler-kwargs:
 
 # Patch queue
 train-patch-queue-kwargs:
-  max_length: 128
+  max_length: 32
   samples_per_volume: 8
   num_workers: 4
   shuffle_subjects: True

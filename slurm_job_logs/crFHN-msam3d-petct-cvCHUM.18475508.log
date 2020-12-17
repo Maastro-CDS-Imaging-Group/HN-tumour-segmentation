@@ -1,0 +1,96 @@
+(OK) Loading cuda 10.2.89
+
+
+Thu Dec 17 10:31:20 2020       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 450.51.06    Driver Version: 450.51.06    CUDA Version: 11.0     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  Tesla P100-SXM2...  Off  | 00000000:06:00.0 Off |                    0 |
+| N/A   39C    P0    43W / 300W |      0MiB / 16280MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+|   1  Tesla P100-SXM2...  Off  | 00000000:84:00.0 Off |                    0 |
+| N/A   41C    P0    40W / 300W |      0MiB / 16280MiB |      2%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+
+
+If you use TorchIO for your research, please cite the following paper:
+Pérez-García et al., TorchIO: a Python library for efficient loading,
+preprocessing, augmentation and patch-based sampling of medical images
+in deep learning. Credits instructions: https://torchio.readthedocs.io/#credits
+
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): api.wandb.ai:443
+DEBUG:urllib3.connectionpool:https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 200 None
+DEBUG:git.cmd:Popen(['git', 'rev-parse', '--show-toplevel'], cwd=/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation, universal_newlines=False, shell=None, istream=None)
+INFO:wandb:setting login settings: {}
+wandb: Currently logged in as: cnmy-ro (use `wandb login --relogin` to force relogin)
+wandb: wandb version 0.10.12 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.10.7
+wandb: Syncing run crFHN-msam3d-petct-cvCHUM
+wandb: ⭐️ View project at https://wandb.ai/cnmy-ro/hn-gtv-segmentation
+wandb: 🚀 View run at https://wandb.ai/cnmy-ro/hn-gtv-segmentation/runs/2v3quazz
+wandb: Run data is saved locally in wandb/run-20201217_103200-2v3quazz
+wandb: Run `wandb off` to turn off syncing.
+DEBUG:root:Trainer initialized
+DEBUG:root:Train subset name: crossval-CHUM-training
+DEBUG:root:Validation subset name: crossval-CHUM-validation
+DEBUG:root:Input is bimodal: True
+DEBUG:root:Network name: msam3d
+DEBUG:root:Run name: crFHN-msam3d-petct-cvCHUM
+DEBUG:root:Epoch 1
+DEBUG:root:Training ...
+  0%|          | 0/580 [00:00<?, ?it/s]  0%|          | 0/580 [00:28<?, ?it/s]
+Traceback (most recent call last):
+  File "./training_script.py", line 109, in <module>
+    main(global_config)
+  File "./training_script.py", line 102, in main
+    trainer.run_training()
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/trainutils/trainer.py", line 171, in run_training
+    for batch_of_patches in tqdm(self.train_patch_loader):
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/tqdm/std.py", line 1133, in __iter__
+    for obj in iterable:
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/utils/data/dataloader.py", line 363, in __next__
+    data = self._next_data()
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/utils/data/dataloader.py", line 403, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/utils/data/_utils/fetch.py", line 44, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/utils/data/_utils/fetch.py", line 44, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/datautils/patch_sampling.py", line 282, in __getitem__
+    self.fill_queue()
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/datautils/patch_sampling.py", line 297, in fill_queue
+    patches = self.sampler.get_samples(subject_sample, self.samples_per_volume)
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/datautils/patch_sampling.py", line 36, in get_samples
+    focal_points = self._sample_valid_focal_points(num_patches, subject_dict)
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/datautils/patch_sampling.py", line 129, in _sample_valid_focal_points
+    focal_points = self._sample_from_probability_map(num_patches, sampling_prob_map, valid_indx_range)
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/Git/HN-tumour-segmentation/datautils/patch_sampling.py", line 164, in _sample_from_probability_map
+    distribution = sampling_prob_map[sampling_prob_map > 0].flatten()
+  File "/rwthfs/rz/cluster/home/zk315372/Chinmay/maastro_env/lib64/python3.6/site-packages/torch/utils/data/_utils/signal_handling.py", line 66, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 29264) is killed by signal: Killed. 
+wandb: Waiting for W&B process to finish, PID 29301
+wandb: Program failed with code 1.  Press ctrl-c to abort syncing.
+wandb: - 0.00MB of 0.00MB uploaded (0.00MB deduped)wandb: \ 0.01MB of 0.01MB uploaded (0.00MB deduped)wandb:                                                                                
+wandb: Find user logs for this run at: wandb/run-20201217_103200-2v3quazz/logs/debug.log
+wandb: Find internal logs for this run at: wandb/run-20201217_103200-2v3quazz/logs/debug-internal.log
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: 
+wandb: Synced crFHN-msam3d-petct-cvCHUM: https://wandb.ai/cnmy-ro/hn-gtv-segmentation/runs/2v3quazz
+
+slurmstepd: error: Detected 5 oom-kill event(s) in step 18475508.batch cgroup. Some of your processes may have been killed by the cgroup out-of-memory handler.

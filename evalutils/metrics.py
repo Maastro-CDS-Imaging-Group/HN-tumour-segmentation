@@ -17,7 +17,7 @@ def dice(pred_label_volume, target_label_volume):
     """
     intersection = np.sum(pred_label_volume * target_label_volume)
     dice_score = (2 * intersection + EPSILON) / (np.sum(pred_label_volume) + np.sum(target_label_volume) + EPSILON)
-    return round(dice_score, 5)
+    return dice_score
 
 
 def jaccard(pred_label_volume, target_label_volume, return_i_and_u=False):
@@ -33,9 +33,9 @@ def jaccard(pred_label_volume, target_label_volume, return_i_and_u=False):
     union = np.sum(np.maximum(pred_label_volume, target_label_volume)).astype(float)
     iou = (intersection + EPSILON) / (union + EPSILON)
     if return_i_and_u:
-        return round(iou, 5), intersection, union    
+        return iou, intersection, union    
     else:
-        return round(iou, 5) 
+        return iou
 
 
 def hausdorff(pred_label_volume, target_label_volume, dim_ordering='whd'):
@@ -50,4 +50,4 @@ def hausdorff(pred_label_volume, target_label_volume, dim_ordering='whd'):
         return 99999
 
     hausdorff = hd(pred_label_volume, target_label_volume, voxelspacing=spacing, connectivity=1)
-    return round(hausdorff, 5)
+    return hausdorff
