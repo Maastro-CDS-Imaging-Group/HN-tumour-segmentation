@@ -198,15 +198,17 @@ class Trainer():
                 # Run one validation step - split patient volumes into patches, run forward pass with the patches, 
                 # aggregate prediction patches into full volume labelmap and compute dice score
                 patient_val_loss, patient_dice_score = self._validation_step(patient_dict)
-                
+
                 epoch_val_loss += patient_val_loss
                 epoch_val_dice += patient_dice_score
+                
+                # Clear CUDA cache
+                torch.cuda.empty_cache()
                 
             epoch_val_loss /= len(self.val_volume_loader)
             epoch_val_dice /= len(self.val_volume_loader)
 
-            # Clear CUDA cache
-            torch.cuda.empty_cache()
+            
 
 
             # Logging --

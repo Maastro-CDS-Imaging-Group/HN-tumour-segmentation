@@ -85,11 +85,14 @@ class Inferer():
                 if self.nn_name == 'msam3d' and attention_map_volume is not None:                
                     attention_map_volume_sitk = np2sitk(attention_map_volume, has_whd_ordering=False)
                     output_nrrd_filename = f"{p_id}_am.nrrd"
-                    sitk.WriteImage(attention_map_volume_sitk, f"{self.inference_config['output-save-dir']}/attention_maps/{output_nrrd_filename}", True)
-           
+                    sitk.WriteImage(attention_map_volume_sitk, f"{self.inference_config['output-save-dir']}/attention_maps/{output_nrrd_filename}", True)            
+
             if self.inference_config['compute-metrics']:
                 dice_scores[p_id] = patient_dice_score
                 avg_dice += patient_dice_score
+            
+            # Clear CUDA cache
+            torch.cuda.empty_cache()
         
         if self.inference_config['compute-metrics']:
             avg_dice /= len(self.volume_loader)

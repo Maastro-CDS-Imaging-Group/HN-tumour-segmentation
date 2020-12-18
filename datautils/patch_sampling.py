@@ -97,6 +97,7 @@ class PatchSampler3D():
             zs, ys, xs = zs.flatten(), ys.flatten(), xs.flatten()
             focal_points = [(zs[i], ys[i], xs[i]) for i in range(num_patches)]
 
+
         elif self.sampling == 'strided-random':
             '''
             Uniform random sampling over spare valid focal points
