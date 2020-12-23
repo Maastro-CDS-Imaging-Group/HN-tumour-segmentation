@@ -196,7 +196,7 @@ class Trainer():
             # Iterate over patients in validation set
             for patient_dict in tqdm(self.val_volume_loader):
                 # Run one validation step - split patient volumes into patches, run forward pass with the patches, 
-                # aggregate prediction patches into full volume labelmap and compute dice score
+                #   aggregate prediction patches into full volume labelmap and compute dice score
                 patient_val_loss, patient_dice_score = self._validation_step(patient_dict)
 
                 epoch_val_loss += patient_val_loss
@@ -209,8 +209,6 @@ class Trainer():
             epoch_val_dice /= len(self.val_volume_loader)
 
             
-
-
             # Logging --
             logging.debug(f"Training loss: {epoch_train_loss}")
             logging.debug(f"Validation loss: {epoch_val_loss}")

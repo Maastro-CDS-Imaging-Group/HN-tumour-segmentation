@@ -8,7 +8,7 @@
 
 ## OpenMP settings
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=12G
+#SBATCH --mem-per-cpu=32G
 
 ## Request for a node with 2 Tesla P100 GPUs
 #SBATCH --gres=gpu:pascal:2
@@ -16,7 +16,7 @@
 #SBATCH --time=100:00:00
 
 ## TO use the UM DKE project account
-# #SBATCH --account=um_dke
+#SBATCH --account=um_dke
 
 
 # Load CUDA 

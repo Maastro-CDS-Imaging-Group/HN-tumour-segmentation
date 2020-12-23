@@ -2,7 +2,7 @@
 # Constants
 # --------------------------------------------------------
 dataset-name: hecktor-crFHN_rs113
-data-root-dir: /home/ft002207/Chinmay/Datasets/HECKTOR/hecktor_train
+data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train
 
 patient-id-filepath: ./hecktor_meta/patient_IDs_train.txt
 
@@ -84,7 +84,7 @@ train-patch-queue-kwargs:
 # --------------------------------------------------------
 # Focal point stride and padding combinations
 #  (140,140,44) stride and (114,114,36) padding -->  48 patches per volume
-#  (144,144,24) stride and (0,0,20) padding -->  36 patches per volume (with 18x18 voxels in x-y plane not covered)
+#  (144,144,24) stride and (0,0,20) padding -->  36 patches per volume (with last 18 voxels on x and y axes not covered). Using (1,1,20) actually instead of (0,0,20).
 
 
 # Patch sampler

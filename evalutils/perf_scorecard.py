@@ -1,7 +1,8 @@
 import yaml
 from collections import OrderedDict
 
-CATEGORIES = ("Data", "Model", "Centre Wise Metrics", "Global Metrics")
+CATEGORIES = ("Data", "Model", "Per Centre Metrics", "Global Metrics")
+
 
 class PerformanceScorecard():
 

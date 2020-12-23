@@ -17,7 +17,6 @@ class SPP():
         self.patient_ids = patient_ids
         self.output_dir = output_dir
 
-        self.norm_constant = None
         self.alpha = None
         self.beta = None   
         self.n_iterations = 100
@@ -57,7 +56,6 @@ class SPP():
 
         self.alpha = alpha
         self.beta = beta
-        self._compute_norm_constant()
         
         perf_mean = alpha / (alpha + beta)
         perf_stddev = math.sqrt(alpha*beta / ((alpha+beta)**2 * (alpha+beta+1)))
@@ -74,25 +72,37 @@ class SPP():
         Plot the PDF
         '''
         xs = np.linspace(0, 1, 1000)
-        fs = self._beta_distribution_pdf(xs)
-        plt.plot(xs, fs)
+        fs = beta_distribution_pdf(xs, self.alpha, self.beta)
+        plt.plot(xs, fs, 'b-')
+        plt.xlabel("Volume Overlap")
+        plt.ylabel("Probability Density Function")
+
+        perf_mean = self.alpha / (self.alpha + self.beta)
+        plt.plot([perf_mean, perf_mean], [0, beta_distribution_pdf(perf_mean, self.alpha, self.beta)], 'k--')
+
+        plt.title("Statistical Performance Profile")
         plt.savefig(f"{self.output_dir}/SPP_plot.png")
 
 
-    def _compute_norm_constant(self):
-        '''
-        Calculate 1 / B(alpha, beta)
-        '''
-        def B_integrand(t, alpha, beta):
-            return t**(alpha-1) * (1-t)**(beta-1)
 
-        B = integrate.quad(B_integrand, 0, 1, args=(self.alpha, self.beta))[0]
-        self.norm_constant = 1 / B
+def compute_norm_constant(alpha, beta):
+    '''
+    Calculate 1 / B(alpha, beta)
+    '''
+    def B_integrand(t, alpha, beta):
+        return t**(alpha-1) * (1-t)**(beta-1)
+
+    B = integrate.quad(B_integrand, 0, 1, args=(alpha, beta))[0]
+    norm_constant = 1 / B
+    return norm_constant
 
 
-    def _beta_distribution_pdf(self, x):
-        f = self.norm_constant * x**(self.alpha-1) * (1-x)**(self.beta-1)
-        return f
+def beta_distribution_pdf(x, alpha, beta):
+    norm_constant = compute_norm_constant(alpha, beta)
+    f = norm_constant * x**(alpha-1) * (1-x)**(beta-1)
+    return f
+
+
 
 
 if __name__ == '__main__':

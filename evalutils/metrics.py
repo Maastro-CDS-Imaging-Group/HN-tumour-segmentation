@@ -40,14 +40,14 @@ def jaccard(pred_label_volume, target_label_volume, return_i_and_u=False):
 
 def hausdorff(pred_label_volume, target_label_volume, dim_ordering='whd'):
     """
-    Hausdorff Distance (HD) -- full version
+    Hausdorff Distance (HD) -- full version (no percentile limit)
     """
-    # TODO Benchmark and compare Medpy's implementation with Deepmind's
     if dim_ordering == 'whd':    spacing = (1,1,3)
     elif dim_ordering == 'dhw':    spacing = (3,1,1)
 
-    if 1 not in np.unique(pred_label_volume.astype(np.int8)):
-        return 99999
+    # Handling the no-prediction case
+    if list(np.unique(pred_label_volume.astype(np.int8))) != [0, 1]:
+        return np.NaN
 
     hausdorff = hd(pred_label_volume, target_label_volume, voxelspacing=spacing, connectivity=1)
     return hausdorff
