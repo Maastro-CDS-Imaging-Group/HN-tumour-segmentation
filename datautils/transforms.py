@@ -18,9 +18,9 @@ def build_transforms():
 		rotation_transform = torchio.RandomAffine(scales=(1,1), degrees=ROTATION_RANGE, translation=(0,0))
 		scaling_transform = torchio.RandomAffine(scales=SCALE_FACTOR_RANGE, degrees=(0,0), translation=(0,0))
 		elastic_transform = torchio.RandomElasticDeformation(num_control_points=NUM_CONTROL_POINTS, max_displacement=MAX_DISPLACEMENT, locked_borders=2)
-		transforms_dict = {rotation_transform: 0.33,
-		                    scaling_transform: 0.33,
-		                    elastic_transform: 0.33}
+		transforms_dict = {rotation_transform: 0.45,
+		                    scaling_transform: 0.45,
+		                    elastic_transform: 0.10}
 		torchio_oneof_transform = torchio.transforms.OneOf(transforms_dict)
 
 

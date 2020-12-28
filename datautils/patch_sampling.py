@@ -3,6 +3,7 @@ The word "subject" used here doesn't mean any association with the TorchIO Subje
 The name is just convenient and hence is used here to define a set of volumes belonging to a single patient.
 """
 
+import math
 import random
 import numpy as np
 import torch
@@ -136,7 +137,7 @@ class PatchSampler3D():
             # Get the PET foreground
             PET_volume = subject_dict['PET'][0].clone().detach().numpy()
             intensity_threshold = 0.1 # [0,1] range
-            PET_volume = (PET_volume > intensity_threshold).astype(np.float32) # Apply threshold to get foreground
+            PET_fg_mask = (PET_volume > intensity_threshold).astype(np.float32) # Apply threshold to get foreground mask
 
             # Get the GTV labelmap and create a high-probability zone around it
             gtv_labelmap = subject_dict['target-labelmap'].clone().detach().numpy()
@@ -149,7 +150,7 @@ class PatchSampler3D():
 
             # Compose the sampling probability map
             sampling_prob_map = np.zeros_like(gtv_labelmap)
-            sampling_prob_map = PET_volume + 5 * high_prob_zone_map
+            sampling_prob_map = PET_fg_mask + 8.0 * high_prob_zone_map
 
             # Normalize to form a true probability distribution
             sampling_prob_map = sampling_prob_map / np.sum(sampling_prob_map)

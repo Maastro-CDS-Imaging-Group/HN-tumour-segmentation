@@ -2,7 +2,7 @@
 # Constants
 # --------------------------------------------------------
 dataset-name: hecktor-crFHN_rs113
-data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train
+data-root-dir: /home/ft002207/Chinmay/Datasets/HECKTOR/hecktor_train
 
 patient-id-filepath: ./hecktor_meta/patient_IDs_train.txt
 
@@ -40,7 +40,7 @@ preprocessor-kwargs:
       - -150
       - 150
   histogram_landmarks_path:
-    PET: "./hecktor_meta/default_small_crop/crossval_CHUM-histogram_landmarks_PET.txt"
+    PET: "./hecktor_meta/full_head_neck_crop/crossval_CHUM-histogram_landmarks_PET.txt"
     CT: None
 
 # --------------------------------------------------------
@@ -64,7 +64,7 @@ train-patch-sampler-kwargs:
     - 1
     - 1
     - 1
-  sampling: pet-weighted-random
+  sampling: gtv-petfg-weighted-random
   padding:
     - 0
     - 0

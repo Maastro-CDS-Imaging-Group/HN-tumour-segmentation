@@ -3,12 +3,12 @@
 
 # Job configuration ---
 
-#SBATCH --job-name=crFHN-msam3d-petct-cvCHUM
-#SBATCH --output=slurm_job_logs/crFHN-msam3d-petct-cvCHUM.%j.log
+#SBATCH --job-name=crFHN-msam3d-petct-cvCHUM-gtvweighted-histfix
+#SBATCH --output=slurm_job_logs/crFHN-msam3d-petct-cvCHUM-gtvweighted-histfix.%j.log
 
 ## OpenMP settings
 #SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=32G
+#SBATCH --mem-per-cpu=16G
 
 ## Request for a node with 2 Tesla P100 GPUs
 #SBATCH --gres=gpu:pascal:2
@@ -16,7 +16,7 @@
 #SBATCH --time=100:00:00
 
 ## TO use the UM DKE project account
-#SBATCH --account=um_dke
+# #SBATCH --account=um_dke
 
 
 # Load CUDA 
@@ -35,7 +35,7 @@ data_config_file="./config_files/data-crFHN_rs113-petct_default.yaml"
 nn_config_file="./config_files/nn-msam3d_default.yaml"
 trainval_config_file="./config_files/trainval-default.yaml"
 
-run_name="crFHN-msam3d-petct-cvCHUM"
+run_name="crFHN-msam3d-petct-cvCHUM-gtvweighted-histfix"
 
 $python_interpreter $python_file --data_config_file $data_config_file \
                                  --nn_config_file $nn_config_file \
