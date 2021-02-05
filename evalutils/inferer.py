@@ -52,10 +52,10 @@ class Inferer():
             self.patient_ids = [p_id for p_id in pf.read().split('\n') if p_id != '']
         centre = self.inference_config['subset-name'].split('-')[1] 
         self.patient_ids = [p_id for p_id in self.patient_ids if centre in p_id]
-        
+
         # Correction for crS data. Comment, if not using crS 
-        if centre == 'CHUM':    self.patient_ids.remove("CHUM010")
-        if centre == 'CHUS':    self.patient_ids.remove("CHUS021")
+        # if centre == 'CHUM':    self.patient_ids.remove("CHUM010")
+        # if centre == 'CHUS':    self.patient_ids.remove("CHUS021")
 
 
         # Output saving stuff
@@ -70,6 +70,9 @@ class Inferer():
         dice_scores = {}
         avg_dice = 0
         for i, patient_dict in enumerate(tqdm(self.volume_loader)):
+            
+            if i < 42: continue ##
+
             # Run one inference step - split patient volumes into patches, run forward pass with the patches, 
             # aggregate prediction patches into full volume labelmap and compute dice score
             patient_pred_volume, patient_dice_score, attention_map_volume = self._inference_step(patient_dict)

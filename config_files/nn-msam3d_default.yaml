@@ -20,4 +20,4 @@ nn-kwargs:
     residual: True
     normalization: batch  # None or batch
   
-  output_attention_map: False
+  output_attention_map: True

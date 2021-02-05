@@ -1,8 +1,4 @@
-x Add an option of outputting attention maps in MSAM3D; make changes in Trainer and Inferer 
-
-x Simplify MSAM (maybe):
-    x Reduce out_channels_first of attention module from 32 to 16 (Attention module only)
-    x Trilinear interpolation for upsampling instead of transpose conv (Attention module only)
+x Generate combined Dice box plot for crS crossval
 
 
 - Implement validation metrics:
@@ -20,5 +16,3 @@ x Simplify MSAM (maybe):
 - Efficiency improvement:
     - torch.cuda.empty_cache() -- read more about this
     - Option for distributed training: See torch DataParallel for now. Later move on to using torch DistributedDataParallel 
-
-x Integrate enable_distributed option of the Trainer and Infer into the config system

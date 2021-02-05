@@ -24,6 +24,13 @@ from evalutils.stats import beta_distribution_pdf
 PERFORMANCES_ROOT_DIR = "/home/zk315372/Chinmay/model_performances"
 PATIENT_ID_FILEPATH = "./hecktor_meta/patient_IDs_train.txt"
 
+SEG_APPROACHES = ('unet3d_pet', 'unet3d_ct', 'unet3d_petct', 'unet3d_latefusion', 'msam3d_petct')
+SEG_DISPLAY_NAMES = {'unet3d_pet': 'PET U-Net', 'unet3d_ct': 'CT U-Net', 
+                     'unet3d_petct': 'Input-level fusion U-Net', 
+                     'unet3d_latefusion': 'Decision-level fusion U-Nets',
+                     'msam3d_petct': 'MSAM'}
+
+
 def main():
     with open(PATIENT_ID_FILEPATH, 'r') as pf:
         patient_ids = [p_id for p_id in pf.read().split('\n') if p_id != '']
@@ -35,7 +42,7 @@ def main():
 
     # -------------------------------------------------------------------
     # Fetch the scorecard data and patient-wise metrics for all seg approaches
-    seg_approaches = ('unet3d_pet', 'unet3d_ct', 'unet3d_petct', 'unet3d_latefusion', 'msam3d_petct')
+    seg_approaches = SEG_APPROACHES
     scorecards_dict = {} # Model wise scorecards
     patient_metrics_dict = {} # Model wise per-patient metrics
     
@@ -51,8 +58,8 @@ def main():
 
     # -------------------------------------------------------------------
     # Combine the information across seg approaches
-    # output_dir = f"{PERFORMANCES_ROOT_DIR}/hecktor-crS_rs113"
-    output_dir = "./temp_dir" ##
+    output_dir = f"{PERFORMANCES_ROOT_DIR}/hecktor-crS_rs113"
+    # output_dir = "./temp_dir" ##
 
     # 1. Combined SPP plot
     plot_combined_SPP(scorecards_dict, savefig=True, output_dir=output_dir)
@@ -61,7 +68,7 @@ def main():
     plot_combined_patient_dice(patient_ids, patient_metrics_dict, savefig=True, output_dir=output_dir)
 
     # 3. Box plots
-    boxplot_patient_metrics(patient_ids, patient_metrics_dict, metric_name='hausdorff', savefig=True, output_dir=output_dir)
+    boxplot_patient_metrics(patient_ids, patient_metrics_dict, metric_name='dice', savefig=True, output_dir=output_dir)
 
 
 def plot_combined_SPP(scorecards_dict, savefig, output_dir):
@@ -75,7 +82,7 @@ def plot_combined_SPP(scorecards_dict, savefig, output_dir):
 
         fs = beta_distribution_pdf(xs, alpha, beta)
         plt.plot(xs, fs, 
-                 linestyle='-', color=colors[i], label=seg_appr)
+                 linestyle='-', color=colors[i], label=SEG_DISPLAY_NAMES[seg_appr])
 
         plt.plot([perf_mean, perf_mean], [0, beta_distribution_pdf(perf_mean, alpha, beta)], 
                   linestyle='--', color=colors[i])
@@ -122,6 +129,8 @@ def boxplot_patient_metrics(patient_ids, patient_metrics_dict, metric_name, save
     fig, ax = plt.subplots()
 
     seg_apporaches = patient_metrics_dict.keys()
+    label_names = [SEG_DISPLAY_NAMES[seg_appr] for seg_appr in seg_apporaches]
+
     if metric_name == 'dice':
         vector_sequence = [np.array(patient_metrics_dict[seg_appr]['Dice']) for seg_appr in seg_apporaches]
 
@@ -131,13 +140,14 @@ def boxplot_patient_metrics(patient_ids, patient_metrics_dict, metric_name, save
             hausdorff_distances = patient_metrics_dict[seg_appr]['Hausdorff']
             hausdorff_distances = [hd if not math.isnan(hd) else 9999 for hd in hausdorff_distances] # NaN handling
             vector_sequence.append(np.array(hausdorff_distances))
-
-    ax.boxplot(vector_sequence, labels=list(seg_apporaches), 
-               showfliers=False)
+            
+    ax.boxplot(vector_sequence, labels=label_names, 
+               showfliers=True,
+               sym='rx')
     
     plt.xticks(rotation=20)
     plt.ylabel(metric_name.capitalize())
-    plt.title(f"Box plot of {metric_name.capitalize()} distributions")
+    plt.title(f"{metric_name.capitalize()} distributions")
     fig.tight_layout()
     
     if savefig:   

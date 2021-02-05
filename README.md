@@ -42,3 +42,7 @@
 
 
 - Late fusion labelmaps and scorecard: Additional model directory named *unet3d_latefusion* within the *hecktor-crS_rs113* directory, in case of *model_predictions* and *model_performances*
+
+
+- crFHN sub-directories:
+    TODO

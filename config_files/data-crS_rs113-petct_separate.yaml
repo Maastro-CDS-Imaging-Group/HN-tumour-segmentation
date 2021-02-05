@@ -40,7 +40,7 @@ preprocessor-kwargs:
       - -150
       - 150
   histogram_landmarks_path:
-    PET: "./hecktor_meta/default_small_crop/crossval_CHUS-histogram_landmarks_PET.txt"
+    PET: "./hecktor_meta/default_small_crop/crossval_CHUM-histogram_landmarks_PET.txt"
     CT: None
 
 # --------------------------------------------------------

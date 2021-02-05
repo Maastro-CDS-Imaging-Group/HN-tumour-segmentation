@@ -2,7 +2,7 @@
 # Constants
 # --------------------------------------------------------
 dataset-name: hecktor-crFHN_rs113
-data-root-dir: /home/ft002207/Chinmay/Datasets/HECKTOR/hecktor_train
+data-root-dir: /home/zk315372/Chinmay/Datasets/HECKTOR/hecktor_train
 
 patient-id-filepath: ./hecktor_meta/patient_IDs_train.txt
 
@@ -64,7 +64,7 @@ train-patch-sampler-kwargs:
     - 1
     - 1
     - 1
-  sampling: gtv-petfg-weighted-random
+  sampling: pet-weighted-random
   padding:
     - 0
     - 0
