@@ -1,10 +1,6 @@
-# Head-and-Neck GTV Segmentation on PET-CT scans
+# Head-and-Neck GTV Segmentation in Multimodal FDG-PET/CT scans
 
-
-- Uses code from [this repo](https://github.com/Maastro-CDS-Imaging-Group/PET-CT-data-pipeline) for PET-CT data processing, patch based data loading, and patch aggregation
-
-
-- To be integrated into the [clinical segmentation pipeline](https://github.com/Maastro-CDS-Imaging-Group/clinical_segmentation)
+Uses code from [this repo](https://github.com/Maastro-CDS-Imaging-Group/PET-CT-data-pipeline) for PET-CT data processing, patch based data loading, and patch aggregation
 
 
 
@@ -42,7 +38,3 @@
 
 
 - Late fusion labelmaps and scorecard: Additional model directory named *unet3d_latefusion* within the *hecktor-crS_rs113* directory, in case of *model_predictions* and *model_performances*
-
-
-- crFHN sub-directories:
-    TODO
